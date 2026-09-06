@@ -1,0 +1,27 @@
+@import "tailwindcss";
+@import "@repo/config/tailwind.css";
+
+:root {
+  --background: var(--color-surface);
+  --foreground: var(--color-ink);
+  /* Bind the shared Arabic font token to the next/font CSS variable. */
+  --font-arabic-family: var(--font-ibm-plex-arabic), "Cairo", system-ui, sans-serif;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #17130f;
+    --foreground: #f3efe9;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-arabic);
+}

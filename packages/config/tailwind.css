@@ -1,0 +1,49 @@
+/*
+ * وين ناكل — shared Tailwind v4 design tokens.
+ * Single source of truth for brand palette, typography, and radii.
+ * Web imports this after `@import "tailwindcss"`; mobile (NativeWind) maps
+ * the same values so both platforms stay visually consistent.
+ *
+ * RTL note: consumers must use logical utilities (ms/me, ps/pe, start/end,
+ * text-start/text-end) so layout mirrors automatically under dir="rtl".
+ */
+@theme {
+  /* Brand — warm appetite-forward palette (terracotta/saffron) */
+  --color-brand-50: #fef3ee;
+  --color-brand-100: #fde3d5;
+  --color-brand-200: #fac2aa;
+  --color-brand-300: #f69a74;
+  --color-brand-400: #f16c3f;
+  --color-brand-500: #e04a1f; /* primary */
+  --color-brand-600: #c53914;
+  --color-brand-700: #a32c13;
+  --color-brand-800: #822617;
+  --color-brand-900: #6b2216;
+  --color-brand-950: #3a0e09;
+
+  /* Accent — deep olive/pistachio, a nod to Levantine cuisine */
+  --color-accent-50: #f6f7ee;
+  --color-accent-100: #e9edd3;
+  --color-accent-200: #d4dcaa;
+  --color-accent-300: #b7c577;
+  --color-accent-400: #9aab4f;
+  --color-accent-500: #7c9038; /* accent */
+  --color-accent-600: #5f7129;
+  --color-accent-700: #495723;
+  --color-accent-800: #3c4720;
+  --color-accent-900: #343d1f;
+
+  /* Neutrals */
+  --color-surface: #ffffff;
+  --color-surface-muted: #f7f6f4;
+  --color-ink: #1c1a19;
+  --color-ink-muted: #6b6560;
+
+  /* Typography — Arabic-first; families are wired per-platform */
+  --font-arabic: var(--font-arabic-family, "IBM Plex Sans Arabic", "Cairo", system-ui, sans-serif);
+  --font-sans: var(--font-arabic);
+
+  /* Radii */
+  --radius-card: 1rem;
+  --radius-pill: 9999px;
+}
