@@ -8,6 +8,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./arabic": "./src/arabic.ts",
+    "./slug": "./src/slug.ts",
     "./constants": "./src/constants.ts",
     "./restaurant-seeds": "./src/restaurant-seeds.ts",
     "./domain": "./src/domain.ts",

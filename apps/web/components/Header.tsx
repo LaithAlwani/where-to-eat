@@ -23,7 +23,19 @@ export function Header() {
           وين ناكل
         </Link>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <Link
+            href="/submit"
+            className="inline-flex items-center gap-1.5 rounded-pill border border-ink/10 px-4 py-1.5 text-sm font-medium text-ink transition hover:bg-surface-muted"
+          >
+            <span aria-hidden>＋</span> أضف مطعم
+          </Link>
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-1.5 rounded-pill border border-ink/10 px-4 py-1.5 text-sm font-medium text-ink transition hover:bg-surface-muted"
+          >
+            <span aria-hidden>📊</span> لوحة التحكم
+          </Link>
           <Link
             href="/favorites"
             className="inline-flex items-center gap-1.5 rounded-pill border border-ink/10 px-4 py-1.5 text-sm font-medium text-ink transition hover:bg-surface-muted"

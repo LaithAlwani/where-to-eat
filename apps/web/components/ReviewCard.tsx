@@ -84,6 +84,20 @@ export function ReviewCard({ review, restaurantId }: ReviewCardProps) {
         </div>
       )}
 
+      {review.response && (
+        <div className="rounded-card border-s-2 border-accent-400 bg-surface-muted p-3">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm font-bold text-accent-700">
+              رد صاحب المكان
+            </span>
+            <span className="text-xs text-ink-muted">
+              {formatDate(review.response.createdAt)}
+            </span>
+          </div>
+          <p className="mt-1 leading-relaxed text-ink">{review.response.body}</p>
+        </div>
+      )}
+
       <footer className="flex items-center gap-3 text-sm">
         {review.isMine ? (
           <>

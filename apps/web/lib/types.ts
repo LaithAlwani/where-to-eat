@@ -15,3 +15,8 @@ export type RestaurantProfile = NonNullable<
 export type Review = FunctionReturnType<
   typeof api.reviews.listByRestaurant
 >["page"][number];
+
+/** The owner-editable restaurant returned by owner.getMyRestaurant (non-null). */
+export type OwnerRestaurant = NonNullable<
+  FunctionReturnType<typeof api.owner.getMyRestaurant>
+>;

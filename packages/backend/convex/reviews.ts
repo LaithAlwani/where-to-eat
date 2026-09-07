@@ -30,17 +30,26 @@ export const listByRestaurant = query({
       .paginate(paginationOpts);
 
     const page = await Promise.all(
-      results.page.map(async (r) => ({
-        id: r._id,
-        rating: r.rating,
-        body: r.body ?? null,
-        authorName: r.authorName,
-        authorAvatarUrl: await resolveImageUrl(r.authorAvatarKey),
-        photoUrls: await resolveImageUrls(r.photoKeys),
-        createdAt: r.createdAt,
-        editedAt: r.editedAt ?? null,
-        isMine: viewer ? r.userId === viewer._id : false,
-      })),
+      results.page.map(async (r) => {
+        const response = await ctx.db
+          .query("ownerResponses")
+          .withIndex("by_review", (q) => q.eq("reviewId", r._id))
+          .unique();
+        return {
+          id: r._id,
+          rating: r.rating,
+          body: r.body ?? null,
+          authorName: r.authorName,
+          authorAvatarUrl: await resolveImageUrl(r.authorAvatarKey),
+          photoUrls: await resolveImageUrls(r.photoKeys),
+          createdAt: r.createdAt,
+          editedAt: r.editedAt ?? null,
+          isMine: viewer ? r.userId === viewer._id : false,
+          response: response
+            ? { body: response.body, createdAt: response.createdAt }
+            : null,
+        };
+      }),
     );
     return { ...results, page };
   },

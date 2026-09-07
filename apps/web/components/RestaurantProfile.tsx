@@ -12,6 +12,7 @@ import { OpeningHours } from "./OpeningHours";
 import { RestaurantMenu } from "./RestaurantMenu";
 import { ProfileSkeleton } from "./ProfileSkeleton";
 import { ReviewsSection } from "./ReviewsSection";
+import { ClaimSection } from "./ClaimSection";
 
 /**
  * Client-side restaurant profile. Loads via useQuery(getBySlug): shows a
@@ -56,8 +57,16 @@ export function RestaurantProfile({ slug }: { slug: string }) {
       />
 
       <header className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-extrabold text-ink">{data.nameAr}</h1>
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <h1 className="text-3xl font-extrabold text-ink">{data.nameAr}</h1>
+            {data.isClaimed && (
+              <span className="inline-flex items-center gap-1.5 rounded-pill bg-accent-50 px-3 py-1 text-sm font-medium text-accent-700">
+                <span aria-hidden>✅</span>
+                موثق من صاحب المكان
+              </span>
+            )}
+          </div>
           {data.nameEn && (
             <p className="text-ink-muted" dir="ltr">
               {data.nameEn}
@@ -98,6 +107,10 @@ export function RestaurantProfile({ slug }: { slug: string }) {
           </div>
         )}
       </header>
+
+      {!data.isClaimed && (
+        <ClaimSection restaurantId={data.id} isClaimed={false} />
+      )}
 
       <ProfileActions
         restaurantId={data.id}

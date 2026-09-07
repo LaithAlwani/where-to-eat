@@ -208,6 +208,7 @@ export const getBySlug = query({
       ratingAvg: r.ratingAvg,
       ratingCount: r.ratingCount,
       ratingBuckets: r.ratingBuckets ?? [0, 0, 0, 0, 0],
+      isClaimed: r.ownerId != null,
       categories: labels(categoryDocs),
       cuisines: labels(cuisineDocs),
       menu: menu ? menu.sections : null,
