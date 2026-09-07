@@ -9,6 +9,7 @@
     ".": "./src/index.ts",
     "./arabic": "./src/arabic.ts",
     "./constants": "./src/constants.ts",
+    "./restaurant-seeds": "./src/restaurant-seeds.ts",
     "./domain": "./src/domain.ts",
     "./i18n": "./src/i18n.ts"
   },

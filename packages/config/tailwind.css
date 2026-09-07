@@ -39,8 +39,10 @@
   --color-ink: #1c1a19;
   --color-ink-muted: #6b6560;
 
-  /* Typography — Arabic-first; families are wired per-platform */
-  --font-arabic: var(--font-arabic-family, "IBM Plex Sans Arabic", "Cairo", system-ui, sans-serif);
+  /* Typography — Arabic-first; families are wired per-platform.
+     Body = readable text font; heading = display font for titles. */
+  --font-arabic: var(--font-arabic-family, "IBM Plex Sans Arabic", system-ui, sans-serif);
+  --font-heading: var(--font-heading-family, "Tajawal", "IBM Plex Sans Arabic", system-ui, sans-serif);
   --font-sans: var(--font-arabic);
 
   /* Radii */

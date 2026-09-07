@@ -4,8 +4,10 @@
 :root {
   --background: var(--color-surface);
   --foreground: var(--color-ink);
-  /* Bind the shared Arabic font token to the next/font CSS variable. */
-  --font-arabic-family: var(--font-ibm-plex-arabic), "Cairo", system-ui, sans-serif;
+  /* Bind the shared font tokens to the next/font CSS variables. */
+  --font-arabic-family: var(--font-ibm-plex-arabic), system-ui, sans-serif;
+  --font-heading-family: var(--font-tajawal), var(--font-ibm-plex-arabic),
+    system-ui, sans-serif;
 }
 
 @theme inline {
@@ -24,4 +26,12 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-arabic);
+}
+
+/* Headings use the display font (Tajawal) automatically. */
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-heading);
 }

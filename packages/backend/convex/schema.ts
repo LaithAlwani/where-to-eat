@@ -137,6 +137,8 @@ export default defineSchema({
     .index("by_city", ["cityId"])
     .index("by_status", ["status"])
     .index("by_owner", ["ownerId"])
+    // Ordered top-rated within a status without scanning/sorting in JS.
+    .index("by_status_rating", ["status", "ratingAvg"])
     .searchIndex("search_text", {
       searchField: "searchText",
       filterFields: ["cityId", "status", "priceTier"],
@@ -219,4 +221,21 @@ export default defineSchema({
   })
     .index("by_status", ["status"])
     .index("by_target", ["targetType", "targetId"]),
+
+  // Join tables for category/cuisine discovery rails and filters. Listing a
+  // category reads one indexed page of join rows, then batch-gets that page's
+  // restaurants — bounded (page size), never a full scan.
+  restaurantCategories: defineTable({
+    restaurantId: v.id("restaurants"),
+    categoryId: v.id("categories"),
+  })
+    .index("by_category", ["categoryId"])
+    .index("by_restaurant", ["restaurantId"]),
+
+  restaurantCuisines: defineTable({
+    restaurantId: v.id("restaurants"),
+    cuisineId: v.id("cuisines"),
+  })
+    .index("by_cuisine", ["cuisineId"])
+    .index("by_restaurant", ["restaurantId"]),
 });

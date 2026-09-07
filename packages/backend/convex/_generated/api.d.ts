@@ -12,6 +12,7 @@ import type * as auth from "../auth.js";
 import type * as http from "../http.js";
 import type * as lib_errors from "../lib/errors.js";
 import type * as r2 from "../r2.js";
+import type * as restaurants from "../restaurants.js";
 import type * as seed from "../seed.js";
 import type * as taxonomy from "../taxonomy.js";
 import type * as users from "../users.js";
@@ -27,6 +28,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   "lib/errors": typeof lib_errors;
   r2: typeof r2;
+  restaurants: typeof restaurants;
   seed: typeof seed;
   taxonomy: typeof taxonomy;
   users: typeof users;
