@@ -5,6 +5,18 @@ import { appError } from "./lib/errors";
 
 export const r2 = new R2(components.r2);
 
+/** Resolve one R2 object key to a signed display URL (null-safe). */
+export async function resolveImageUrl(
+  key: string | null | undefined,
+): Promise<string | null> {
+  return key ? await r2.getUrl(key) : null;
+}
+
+/** Resolve a list of R2 keys to signed display URLs (bounded by caller). */
+export async function resolveImageUrls(keys: string[]): Promise<string[]> {
+  return Promise.all(keys.map((key) => r2.getUrl(key)));
+}
+
 /**
  * Signed-upload API for restaurant/review/menu images. Uploads are gated on an
  * authenticated user; `onUpload` will link keys to rows in later phases.

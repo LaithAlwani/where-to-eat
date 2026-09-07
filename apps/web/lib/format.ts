@@ -23,3 +23,14 @@ export function formatPrice(price: number, currency?: string): string {
   const label = currency ? (CURRENCY_LABELS[currency] ?? currency) : "";
   return label ? `${digits} ${label}` : digits;
 }
+
+const DATE_FORMATTER = new Intl.DateTimeFormat("ar", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+
+/** Format a millisecond timestamp as an Arabic long date (e.g. ٦ سبتمبر ٢٠٢٦). */
+export function formatDate(ms: number): string {
+  return DATE_FORMATTER.format(new Date(ms));
+}

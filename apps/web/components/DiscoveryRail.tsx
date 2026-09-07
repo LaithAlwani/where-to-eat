@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { RestaurantCard as Card } from "@/lib/types";
 import { RestaurantCard } from "./RestaurantCard";
 import { RestaurantCardSkeleton } from "./RestaurantCardSkeleton";
+import { ScrollRail } from "./ScrollRail";
 
 type DiscoveryRailProps = {
   title: string;
@@ -77,9 +78,7 @@ function RailBody({ restaurants }: { restaurants: Card[] | undefined }) {
 
 function Track({ children }: { children: React.ReactNode }) {
   return (
-    <div className="-mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 [scrollbar-width:thin]">
-      {children}
-    </div>
+    <ScrollRail className="-mx-4 px-4 pb-2">{children}</ScrollRail>
   );
 }
 

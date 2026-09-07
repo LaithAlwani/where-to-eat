@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import type { Id } from "@repo/backend/dataModel";
 import { useToast } from "./ui/ToastProvider";
 import { ConfirmDialog } from "./ui/ConfirmDialog";
+import { FavoriteButton } from "./FavoriteButton";
 
 type ProfileActionsProps = {
+  restaurantId: Id<"restaurants">;
   nameAr: string;
   phone: string | null;
   geo: { lat: number; lng: number } | null;
@@ -13,10 +16,15 @@ type ProfileActionsProps = {
 /**
  * Primary actions row for a restaurant profile. Share uses navigator.share when
  * available, else copies the link and confirms via a toast (never alert). Save
- * and rate are Phase 3 — present but disabled. A "report" flow demonstrates the
- * ConfirmDialog primitive.
+ * toggles the favorite; "تقييم" jumps to the reviews section anchor. A "report"
+ * flow demonstrates the ConfirmDialog primitive.
  */
-export function ProfileActions({ nameAr, phone, geo }: ProfileActionsProps) {
+export function ProfileActions({
+  restaurantId,
+  nameAr,
+  phone,
+  geo,
+}: ProfileActionsProps) {
   const { toast } = useToast();
   const [reportOpen, setReportOpen] = useState(false);
 
@@ -75,25 +83,14 @@ export function ProfileActions({ nameAr, phone, geo }: ProfileActionsProps) {
         <span aria-hidden>↗</span> مشاركة
       </button>
 
-      <button
-        type="button"
-        disabled
-        title="قريباً"
-        className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-pill bg-surface px-5 py-2 font-medium text-ink-muted ring-1 ring-ink/10 opacity-60"
-      >
-        <span aria-hidden>❤️</span> حفظ
-        <span className="text-xs">(قريباً)</span>
-      </button>
+      <FavoriteButton restaurantId={restaurantId} />
 
-      <button
-        type="button"
-        disabled
-        title="قريباً"
-        className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-pill bg-surface px-5 py-2 font-medium text-ink-muted ring-1 ring-ink/10 opacity-60"
+      <a
+        href="#reviews"
+        className="inline-flex items-center gap-1.5 rounded-pill bg-surface px-5 py-2 font-medium text-ink ring-1 ring-ink/10 transition hover:bg-surface-muted"
       >
         <span aria-hidden>⭐</span> تقييم
-        <span className="text-xs">(قريباً)</span>
-      </button>
+      </a>
 
       <button
         type="button"

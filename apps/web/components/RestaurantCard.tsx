@@ -20,7 +20,7 @@ export function RestaurantCard({ restaurant }: { restaurant: Card }) {
       className="group flex flex-col overflow-hidden rounded-card bg-surface shadow-sm ring-1 ring-ink/5 transition hover:-translate-y-0.5 hover:shadow-lg"
     >
       <CoverImage
-        coverKey={restaurant.coverKey}
+        url={restaurant.coverUrl}
         nameAr={restaurant.nameAr}
         rounded=""
         className="aspect-[4/3] w-full"

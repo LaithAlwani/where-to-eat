@@ -6,10 +6,12 @@ import { api } from "@repo/backend";
 import { CoverImage } from "./CoverImage";
 import { RatingStars } from "./RatingStars";
 import { PriceTier } from "./PriceTier";
+import Image from "next/image";
 import { ProfileActions } from "./ProfileActions";
 import { OpeningHours } from "./OpeningHours";
 import { RestaurantMenu } from "./RestaurantMenu";
 import { ProfileSkeleton } from "./ProfileSkeleton";
+import { ReviewsSection } from "./ReviewsSection";
 
 /**
  * Client-side restaurant profile. Loads via useQuery(getBySlug): shows a
@@ -47,7 +49,7 @@ export function RestaurantProfile({ slug }: { slug: string }) {
   return (
     <article className="flex flex-col gap-8">
       <CoverImage
-        coverKey={data.coverKey}
+        url={data.coverUrl}
         nameAr={data.nameAr}
         className="h-56 w-full sm:h-72"
         glyphClassName="text-7xl"
@@ -97,7 +99,34 @@ export function RestaurantProfile({ slug }: { slug: string }) {
         )}
       </header>
 
-      <ProfileActions nameAr={data.nameAr} phone={data.phone} geo={data.geo} />
+      <ProfileActions
+        restaurantId={data.id}
+        nameAr={data.nameAr}
+        phone={data.phone}
+        geo={data.geo}
+      />
+
+      {data.photoUrls.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-lg font-bold text-ink">الصور</h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {data.photoUrls.map((url) => (
+              <div
+                key={url}
+                className="relative aspect-square overflow-hidden rounded-card bg-surface-muted ring-1 ring-ink/5"
+              >
+                <Image
+                  src={url}
+                  alt={data.nameAr}
+                  fill
+                  sizes="(max-width: 640px) 50vw, 33vw"
+                  className="object-cover"
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {data.descriptionAr && (
         <section className="flex flex-col gap-2">
@@ -148,6 +177,15 @@ export function RestaurantProfile({ slug }: { slug: string }) {
             لم تتم إضافة قائمة الطعام بعد
           </p>
         )}
+      </section>
+
+      <section id="reviews" className="scroll-mt-20">
+        <ReviewsSection
+          restaurantId={data.id}
+          avg={data.ratingAvg}
+          count={data.ratingCount}
+          buckets={data.ratingBuckets}
+        />
       </section>
     </article>
   );

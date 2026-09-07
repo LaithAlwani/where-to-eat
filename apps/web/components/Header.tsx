@@ -23,13 +23,21 @@ export function Header() {
           وين ناكل
         </Link>
 
-        <button
-          type="button"
-          onClick={() => setAccountOpen(true)}
-          className="rounded-pill border border-ink/10 px-4 py-1.5 text-sm font-medium text-ink transition hover:bg-surface-muted"
-        >
-          الحساب
-        </button>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/favorites"
+            className="inline-flex items-center gap-1.5 rounded-pill border border-ink/10 px-4 py-1.5 text-sm font-medium text-ink transition hover:bg-surface-muted"
+          >
+            <span aria-hidden>❤️</span> المفضلة
+          </Link>
+          <button
+            type="button"
+            onClick={() => setAccountOpen(true)}
+            className="rounded-pill border border-ink/10 px-4 py-1.5 text-sm font-medium text-ink transition hover:bg-surface-muted"
+          >
+            الحساب
+          </button>
+        </div>
       </div>
 
       <Dialog

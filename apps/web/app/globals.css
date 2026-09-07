@@ -35,3 +35,54 @@ h3,
 h4 {
   font-family: var(--font-heading);
 }
+
+/*
+ * Scrollbars — no default/native chunky bars anywhere.
+ * `.themed-scroll`: thin, brand-tinted, rounded thumb that fits the UI (use on
+ *   the page and any vertical scroll container, incl. dialog bodies).
+ * `.no-scrollbar`: fully hidden (used by horizontal rails that provide arrows).
+ */
+@layer utilities {
+  .themed-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--color-brand-500) 45%, transparent)
+      transparent;
+  }
+  .themed-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .themed-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .themed-scroll::-webkit-scrollbar-thumb {
+    background-color: color-mix(
+      in oklab,
+      var(--color-brand-500) 40%,
+      transparent
+    );
+    border-radius: 9999px;
+  }
+  .themed-scroll:hover::-webkit-scrollbar-thumb {
+    background-color: color-mix(
+      in oklab,
+      var(--color-brand-500) 60%,
+      transparent
+    );
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Apply the themed scrollbar to the whole app by default. */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--color-brand-500) 45%, transparent)
+    transparent;
+}

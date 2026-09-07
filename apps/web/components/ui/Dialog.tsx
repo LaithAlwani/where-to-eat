@@ -49,7 +49,7 @@ export function Dialog({ open, onClose, title, children }: DialogProps) {
       }}
       className="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-card bg-surface p-0 text-ink shadow-2xl backdrop:bg-black/50 open:animate-none"
     >
-      <div className="flex flex-col gap-4 p-6">
+      <div className="themed-scroll flex max-h-[85vh] flex-col gap-4 overflow-y-auto p-6">
         {title && (
           <div className="flex items-center justify-between gap-4">
             <h2 id="dialog-title" className="text-lg font-bold text-ink">

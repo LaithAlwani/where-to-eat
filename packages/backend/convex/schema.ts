@@ -126,6 +126,8 @@ export default defineSchema({
     // Denormalized aggregates — maintained in review mutations, never read-computed.
     ratingAvg: v.number(),
     ratingCount: v.number(),
+    // Star distribution [#1★, #2★, #3★, #4★, #5★]; updated with each review.
+    ratingBuckets: v.optional(v.array(v.number())),
 
     // Normalized Ar+En blob for the search index (built with buildSearchText).
     searchText: v.string(),
@@ -147,6 +149,9 @@ export default defineSchema({
   reviews: defineTable({
     restaurantId: v.id("restaurants"),
     userId: v.id("users"),
+    // Denormalized author display so a review list never reads users per row.
+    authorName: v.string(),
+    authorAvatarKey: v.optional(v.string()),
     rating: v.number(), // 1..5, validated in the mutation
     body: v.optional(v.string()),
     photoKeys: v.array(v.string()),

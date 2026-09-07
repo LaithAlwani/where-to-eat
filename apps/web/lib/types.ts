@@ -10,3 +10,8 @@ export type RestaurantCard = FunctionReturnType<
 export type RestaurantProfile = NonNullable<
   FunctionReturnType<typeof api.restaurants.getBySlug>
 >;
+
+/** A single review row from the paginated listByRestaurant query. */
+export type Review = FunctionReturnType<
+  typeof api.reviews.listByRestaurant
+>["page"][number];

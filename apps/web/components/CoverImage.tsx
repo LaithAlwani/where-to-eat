@@ -1,5 +1,7 @@
+import Image from "next/image";
+
 type CoverImageProps = {
-  coverKey: string | null;
+  url: string | null;
   nameAr: string;
   className?: string;
   rounded?: string;
@@ -8,42 +10,44 @@ type CoverImageProps = {
 };
 
 /**
- * Restaurant cover art. No images are uploaded yet, so `coverKey` is always
- * null and we render a branded gradient placeholder showing the first Arabic
- * letter (or a 🍽️ glyph). Structured so a real R2 URL can slot in later: when
- * `coverKey` becomes non-null, swap in an <img>/next-image here.
+ * Restaurant cover art. When `url` is a real R2-hosted image we render it
+ * filling/covering the box (RTL-safe, since object-cover is direction-neutral);
+ * otherwise we fall back to a branded gradient placeholder showing the first
+ * Arabic letter (or a 🍽️ glyph).
  */
 export function CoverImage({
-  coverKey,
+  url,
   nameAr,
   className = "",
   rounded = "rounded-card",
   glyphClassName = "text-4xl",
 }: CoverImageProps) {
-  const initial = firstArabicLetter(nameAr);
-
-  // Placeholder branch (currently always taken).
-  if (!coverKey) {
+  if (url) {
     return (
-      <div
-        aria-hidden
-        className={`flex items-center justify-center overflow-hidden bg-linear-to-br from-brand-400 to-accent-500 ${rounded} ${className}`}
-      >
-        <span
-          className={`select-none font-bold leading-none text-white/90 ${glyphClassName}`}
-        >
-          {initial ?? "🍽️"}
-        </span>
+      <div className={`relative overflow-hidden bg-surface-muted ${rounded} ${className}`}>
+        <Image
+          src={url}
+          alt={nameAr}
+          fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
+          className="object-cover"
+        />
       </div>
     );
   }
 
-  // Future: render the real R2-hosted cover for `coverKey` here.
+  const initial = firstArabicLetter(nameAr);
   return (
     <div
       aria-hidden
-      className={`bg-surface-muted ${rounded} ${className}`}
-    />
+      className={`flex items-center justify-center overflow-hidden bg-linear-to-br from-brand-400 to-accent-500 ${rounded} ${className}`}
+    >
+      <span
+        className={`select-none font-bold leading-none text-white/90 ${glyphClassName}`}
+      >
+        {initial ?? "🍽️"}
+      </span>
+    </div>
   );
 }
 

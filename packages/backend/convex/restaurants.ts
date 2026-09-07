@@ -2,27 +2,13 @@ import { query } from "./_generated/server";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { normalizeArabic } from "@repo/shared/arabic";
+import { resolveImageUrl, resolveImageUrls } from "./r2";
+import { toCards } from "./lib/cards";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
 
 const RAIL_LIMIT = 12;
 const MAX_RAIL_LIMIT = 24;
-
-/** Card view-model: only the fields a list card renders. */
-function toCard(r: Doc<"restaurants">) {
-  return {
-    id: r._id,
-    slug: r.slug,
-    nameAr: r.nameAr,
-    nameEn: r.nameEn ?? null,
-    cityNameAr: r.cityNameAr,
-    neighborhoodNameAr: r.neighborhoodNameAr ?? null,
-    priceTier: r.priceTier,
-    ratingAvg: r.ratingAvg,
-    ratingCount: r.ratingCount,
-    coverKey: r.coverKey ?? null,
-  };
-}
 
 function clampLimit(limit: number | undefined): number {
   if (!limit || limit < 1) return RAIL_LIMIT;
@@ -38,7 +24,7 @@ export const discoveryNewest = query({
       .withIndex("by_status", (q) => q.eq("status", "published"))
       .order("desc")
       .take(clampLimit(limit));
-    return rows.map(toCard);
+    return toCards(rows);
   },
 });
 
@@ -51,16 +37,17 @@ export const discoveryTopRated = query({
       .withIndex("by_status_rating", (q) => q.eq("status", "published"))
       .order("desc")
       .take(clampLimit(limit));
-    return rows.map(toCard);
+    return toCards(rows);
   },
 });
 
 /** Batch-load a page of restaurants by id, dropping any not-published. */
 async function cardsByIds(ctx: QueryCtx, ids: Id<"restaurants">[]) {
   const docs = await Promise.all(ids.map((id) => ctx.db.get(id)));
-  return docs
-    .filter((d): d is Doc<"restaurants"> => d !== null && d.status === "published")
-    .map(toCard);
+  const published = docs.filter(
+    (d): d is Doc<"restaurants"> => d !== null && d.status === "published",
+  );
+  return toCards(published);
 }
 
 /** Paginated restaurants in a category (by slug). */
@@ -101,9 +88,9 @@ export const listByCity = query({
       .withIndex("by_city", (q) => q.eq("cityId", city._id))
       .paginate(paginationOpts);
 
-    const page = results.page
-      .filter((r) => r.status === "published")
-      .map(toCard);
+    const page = await toCards(
+      results.page.filter((r) => r.status === "published"),
+    );
     return { ...results, page };
   },
 });
@@ -162,7 +149,7 @@ export const search = query({
       })
       .paginate(paginationOpts);
 
-    return { ...results, page: results.page.map(toCard) };
+    return { ...results, page: await toCards(results.page) };
   },
 });
 
@@ -180,14 +167,17 @@ export const getBySlug = query({
       .unique();
     if (!r || r.status !== "published") return null;
 
-    const [categoryDocs, cuisineDocs, menu] = await Promise.all([
-      Promise.all(r.categoryIds.map((id) => ctx.db.get(id))),
-      Promise.all(r.cuisineIds.map((id) => ctx.db.get(id))),
-      ctx.db
-        .query("menus")
-        .withIndex("by_restaurant", (q) => q.eq("restaurantId", r._id))
-        .unique(),
-    ]);
+    const [categoryDocs, cuisineDocs, menu, coverUrl, photoUrls] =
+      await Promise.all([
+        Promise.all(r.categoryIds.map((id) => ctx.db.get(id))),
+        Promise.all(r.cuisineIds.map((id) => ctx.db.get(id))),
+        ctx.db
+          .query("menus")
+          .withIndex("by_restaurant", (q) => q.eq("restaurantId", r._id))
+          .unique(),
+        resolveImageUrl(r.coverKey),
+        resolveImageUrls(r.photoKeys),
+      ]);
 
     const labels = <T extends Doc<"categories"> | Doc<"cuisines">>(
       docs: (T | null)[],
@@ -213,10 +203,11 @@ export const getBySlug = query({
       instagram: r.instagram ?? null,
       website: r.website ?? null,
       hours: r.hours ?? null,
-      coverKey: r.coverKey ?? null,
-      photoKeys: r.photoKeys,
+      coverUrl,
+      photoUrls,
       ratingAvg: r.ratingAvg,
       ratingCount: r.ratingCount,
+      ratingBuckets: r.ratingBuckets ?? [0, 0, 0, 0, 0],
       categories: labels(categoryDocs),
       cuisines: labels(cuisineDocs),
       menu: menu ? menu.sections : null,
