@@ -195,6 +195,7 @@ function EditMyReview({
         rating: mine.rating,
         body: mine.body,
         photoKeys: mine.photoKeys,
+        photoUrls: mine.photoUrls,
       }}
       onDone={onDone}
     />

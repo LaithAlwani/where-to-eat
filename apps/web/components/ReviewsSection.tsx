@@ -63,6 +63,7 @@ export function ReviewsSection({
                       rating: mine.rating,
                       body: mine.body,
                       photoKeys: mine.photoKeys,
+                      photoUrls: mine.photoUrls,
                     }
                   : null
               }

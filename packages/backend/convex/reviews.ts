@@ -4,7 +4,7 @@ import { paginationOptsValidator } from "convex/server";
 import { RATING_MIN, RATING_MAX } from "@repo/shared/domain";
 import { getViewer, requireViewer } from "./lib/viewer";
 import { applyRatingDelta } from "./lib/ratings";
-import { resolveImageUrl, resolveImageUrls } from "./r2";
+import { r2, resolveImageUrl, resolveImageUrls } from "./r2";
 import { appError } from "./lib/errors";
 
 function assertValidRating(rating: number) {
@@ -80,15 +80,19 @@ export const getMine = query({
   },
 });
 
-/** Create a review — one per user per restaurant; updates aggregates atomically. */
+/**
+ * Create a review — one per user per restaurant; updates aggregates atomically.
+ * Photos are uploaded AFTER creation (into a reviews/<reviewId>/ folder) and
+ * attached via `attachPhotos`, so nothing is stored in R2 until the review is
+ * actually saved.
+ */
 export const create = mutation({
   args: {
     restaurantId: v.id("restaurants"),
     rating: v.number(),
     body: v.optional(v.string()),
-    photoKeys: v.optional(v.array(v.string())),
   },
-  handler: async (ctx, { restaurantId, rating, body, photoKeys }) => {
+  handler: async (ctx, { restaurantId, rating, body }) => {
     const user = await requireViewer(ctx);
     assertValidRating(rating);
 
@@ -111,7 +115,7 @@ export const create = mutation({
       authorAvatarKey: user.avatarKey,
       rating,
       body,
-      photoKeys: photoKeys ?? [],
+      photoKeys: [],
       status: "visible",
       createdAt: now,
       updatedAt: now,
@@ -122,15 +126,14 @@ export const create = mutation({
   },
 });
 
-/** Edit the viewer's own review; re-derives aggregates from the rating delta. */
+/** Edit the viewer's own review (rating + body); photos via `attachPhotos`. */
 export const update = mutation({
   args: {
     reviewId: v.id("reviews"),
     rating: v.number(),
     body: v.optional(v.string()),
-    photoKeys: v.optional(v.array(v.string())),
   },
-  handler: async (ctx, { reviewId, rating, body, photoKeys }) => {
+  handler: async (ctx, { reviewId, rating, body }) => {
     const user = await requireViewer(ctx);
     assertValidRating(rating);
 
@@ -143,7 +146,6 @@ export const update = mutation({
     await ctx.db.patch(reviewId, {
       rating,
       body,
-      photoKeys: photoKeys ?? review.photoKeys,
       updatedAt: now,
       editedAt: now,
     });
@@ -155,7 +157,47 @@ export const update = mutation({
   },
 });
 
-/** Delete a review (owner or admin); decrements aggregates. */
+/**
+ * Presign an upload URL for a review photo. The client generates the key as
+ * `reviews/<reviewId>/<uuid>`; we verify the caller owns the review and that
+ * the key is scoped to that review's folder before signing.
+ */
+export const generateUploadUrl = mutation({
+  args: { reviewId: v.id("reviews"), key: v.string() },
+  handler: async (ctx, { reviewId, key }) => {
+    const user = await requireViewer(ctx);
+    const review = await ctx.db.get(reviewId);
+    if (!review) return appError("not_found");
+    if (review.userId !== user._id) return appError("forbidden");
+    if (!key.startsWith(`reviews/${reviewId}/`)) {
+      return appError("invalid_input", "key must be scoped to the review");
+    }
+    return r2.generateUploadUrl(key);
+  },
+});
+
+/**
+ * Set the review's photos to exactly `photoKeys` (owner only). Any previously
+ * attached key no longer present is deleted from R2 — so removing a photo or
+ * deleting the review cleans up storage.
+ */
+export const attachPhotos = mutation({
+  args: { reviewId: v.id("reviews"), photoKeys: v.array(v.string()) },
+  handler: async (ctx, { reviewId, photoKeys }) => {
+    const user = await requireViewer(ctx);
+    const review = await ctx.db.get(reviewId);
+    if (!review) return appError("not_found");
+    if (review.userId !== user._id) return appError("forbidden");
+
+    const removed = review.photoKeys.filter((k) => !photoKeys.includes(k));
+    await Promise.all(removed.map((key) => r2.deleteObject(ctx, key)));
+
+    await ctx.db.patch(reviewId, { photoKeys, updatedAt: Date.now() });
+    return { ok: true };
+  },
+});
+
+/** Delete a review (owner or admin); decrements aggregates and removes photos. */
 export const remove = mutation({
   args: { reviewId: v.id("reviews") },
   handler: async (ctx, { reviewId }) => {
@@ -167,6 +209,7 @@ export const remove = mutation({
     const isAdmin = user.role === "admin";
     if (!isOwner && !isAdmin) return appError("forbidden");
 
+    await Promise.all(review.photoKeys.map((key) => r2.deleteObject(ctx, key)));
     await applyRatingDelta(ctx, review.restaurantId, {
       oldRating: review.rating,
     });
