@@ -19,3 +19,10 @@ export async function requireViewer(ctx: QueryCtx): Promise<Doc<"users">> {
   if (user.isBanned) return appError("forbidden");
   return user;
 }
+
+/** Require the viewer to be an admin. */
+export async function requireAdmin(ctx: QueryCtx): Promise<Doc<"users">> {
+  const user = await requireViewer(ctx);
+  if (user.role !== "admin") return appError("forbidden");
+  return user;
+}

@@ -6,6 +6,7 @@ const KNOWN_CODES = [
   "forbidden",
   "not_found",
   "duplicate_review",
+  "invalid_input",
   "rate_limited",
   "unknown",
 ] as const;

@@ -57,6 +57,7 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_authId", ["authId"])
+    .index("by_email", ["email"])
     .index("by_role", ["role"]),
 
   cities: defineTable({

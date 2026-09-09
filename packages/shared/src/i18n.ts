@@ -12,6 +12,7 @@ export type MessageKey =
   | "error.forbidden"
   | "error.not_found"
   | "error.duplicate_review"
+  | "error.invalid_input"
   | "error.rate_limited"
   | "error.unknown";
 
@@ -24,6 +25,7 @@ const AR: Catalog = {
   "error.forbidden": "لا تملك صلاحية لهذا الإجراء",
   "error.not_found": "العنصر غير موجود",
   "error.duplicate_review": "لقد قمت بتقييم هذا المكان من قبل",
+  "error.invalid_input": "المدخلات غير صحيحة",
   "error.rate_limited": "حاول مرة أخرى بعد قليل",
   "error.unknown": "حدث خطأ ما، حاول مرة أخرى",
 };
@@ -35,6 +37,7 @@ const EN: Catalog = {
   "error.forbidden": "You don't have permission for this action",
   "error.not_found": "Item not found",
   "error.duplicate_review": "You've already reviewed this place",
+  "error.invalid_input": "Invalid input",
   "error.rate_limited": "Please try again in a moment",
   "error.unknown": "Something went wrong, please try again",
 };
