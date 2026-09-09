@@ -16,14 +16,13 @@ Monorepo: **pnpm + Turborepo**. See [SETUP.md](../SETUP.md) to run it.
 - ✅ **Phase 1 — Shared backend** (schema, Better Auth, R2 wiring, taxonomy seed)
 - ✅ **Phase 2 — Web read path** (discovery homepage, search, filters, restaurant profiles, 11 seeded restaurants)
 - ✅ **Phase 3 — Reviews, ratings, photos, favorites** (one-per-user reviews + transactional aggregates, R2 photo upload, favorites, reports; custom scrollbars)
-- ✅ **Phase 4 — Submission, claiming, business dashboard** (submit `pending`, claim flow + internal approve bridge, owner dashboard: info/hours/photos/menu/review-replies)
-- ⬜ **Phase 5 — Admin dashboard** (moderate submissions/claims/reviews/reports, manage taxonomies, ban users, publish/reject) — replaces the CLI approve/publish bridge
+- ✅ **Phase 4 — Submission, claiming, business dashboard** (submit `pending`, claim flow, owner dashboard: info/hours/photos/menu/review-replies)
+- ✅ **Phase 5 — Admin dashboard** (`/admin`: moderate pending restaurants/claims/reports, hide reviews, manage taxonomies, ban users & change roles). Replaces the CLI approve/publish bridge with in-app buttons.
 - ⬜ **Phase 6 — Mobile app** (Expo)
 
-## Interim admin bridge (until Phase 5)
-- Approve a claim → grant ownership: `cd packages/backend && npx convex run claims:approve '{"claimId":"<id>"}'`
-- Publish a pending submission: set its `status` to `published` in the Convex dashboard → Data → restaurants
-- Seed taxonomy / restaurants: `npx convex run seed:seedTaxonomy` / `seed:seedRestaurants`
+## Admin
+- Bootstrap the first admin (one-time): `cd packages/backend && npx convex run admin:grantAdmin '{"email":"you@example.com"}'` — then use `/admin` in the app.
+- Seed taxonomy / restaurants: `npx convex run seed:seedTaxonomy` / `seed:seedRestaurants`.
 
 ## Outstanding config (account-side)
 - **R2 bucket** not yet provisioned → photo uploads fail until the 5 `R2_*` env vars + bucket CORS are set (see SETUP.md "Cloudflare R2"). Deployment env vars (auth secret, R2) live on the Convex deployment, so they persist across machines.
