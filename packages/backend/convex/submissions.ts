@@ -47,6 +47,8 @@ export const submit = mutation({
     website: v.optional(v.string()),
     descriptionAr: v.optional(v.string()),
     address: v.optional(v.string()),
+    // Submitter states they own the place → auto-file a claim for verification.
+    claimOwnership: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const user = await requireViewer(ctx);
@@ -96,6 +98,18 @@ export const submit = mutation({
       tax.cuisines.map((c) => c._id),
     );
 
-    return { id: restaurantId, slug };
+    // If the submitter says they own it, file a pending ownership claim so it
+    // still passes through verification (no auto-grant).
+    if (args.claimOwnership) {
+      await ctx.db.insert("businessClaims", {
+        restaurantId,
+        userId: user._id,
+        status: "pending",
+        note: "طلب ملكية عند إضافة المطعم",
+        createdAt: now,
+      });
+    }
+
+    return { id: restaurantId, slug, claimFiled: args.claimOwnership === true };
   },
 });

@@ -40,8 +40,9 @@ export function RestaurantSubmitForm() {
   const [website, setWebsite] = useState("");
   const [descriptionAr, setDescriptionAr] = useState("");
   const [address, setAddress] = useState("");
+  const [claimOwnership, setClaimOwnership] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState<{ slug: string } | null>(null);
+  const [done, setDone] = useState<{ claimFiled: boolean } | null>(null);
 
   const neighborhoods = useQuery(
     api.taxonomy.listNeighborhoods,
@@ -87,9 +88,10 @@ export function RestaurantSubmitForm() {
         website: website.trim() || undefined,
         descriptionAr: descriptionAr.trim() || undefined,
         address: address.trim() || undefined,
+        claimOwnership,
       });
       toast({ title: "تم إرسال المطعم للمراجعة", variant: "success" });
-      setDone({ slug: result.slug });
+      setDone({ claimFiled: result.claimFiled });
     } catch (err) {
       toast({ title: getErrorMessage(err), variant: "error" });
     } finally {
@@ -125,7 +127,9 @@ export function RestaurantSubmitForm() {
           شكراً! سيظهر المطعم بعد مراجعته.
         </h2>
         <p className="text-ink-muted">
-          راجعنا طلبك وسننشره قريباً. يمكنك متابعة حالة مطاعمك من لوحة التحكم.
+          {done.claimFiled
+            ? "سجّلنا طلبك مع طلب ملكية المكان — سنراجعهما وننشرهما قريباً. تابع الحالة من لوحة التحكم."
+            : "راجعنا طلبك وسننشره قريباً. يمكنك متابعة حالة مطاعمك من لوحة التحكم."}
         </p>
         <div className="flex flex-wrap justify-center gap-2 pt-2">
           <Link href="/dashboard" className={primaryBtnClass}>
@@ -145,6 +149,7 @@ export function RestaurantSubmitForm() {
               setWhatsapp("");
               setInstagram("");
               setWebsite("");
+              setClaimOwnership(false);
             }}
             className="rounded-pill border border-ink-muted/30 px-6 py-2 font-medium text-ink transition hover:bg-surface"
           >
@@ -308,6 +313,23 @@ export function RestaurantSubmitForm() {
           className={inputClass}
           placeholder="عرّف بالمطعم وأجوائه وأطباقه المميزة…"
         />
+      </label>
+
+      <label className="flex items-start gap-3 rounded-card bg-surface-muted px-4 py-3">
+        <input
+          type="checkbox"
+          checked={claimOwnership}
+          onChange={(e) => setClaimOwnership(e.target.checked)}
+          className="mt-1 size-4 accent-brand-500"
+        />
+        <span className="flex flex-col gap-0.5">
+          <span className="text-sm font-medium text-ink">
+            أنا مالك هذا المكان
+          </span>
+          <span className={hintClass}>
+            سيتم إرسال طلب ملكية للمراجعة حتى تتمكن من إدارة الصفحة.
+          </span>
+        </span>
       </label>
 
       <div className="flex justify-end">
