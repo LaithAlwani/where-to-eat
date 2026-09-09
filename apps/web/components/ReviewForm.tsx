@@ -5,7 +5,7 @@ import { useConvexAuth, useMutation } from "convex/react";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend/dataModel";
 import { StarInput } from "./StarInput";
-import { ReviewPhotoPicker } from "./ReviewPhotoPicker";
+import { PhotoPicker } from "./PhotoPicker";
 import { useToast } from "./ui/ToastProvider";
 import { getErrorMessage } from "@/lib/errors";
 
@@ -132,9 +132,10 @@ export function ReviewForm({ restaurantId, existing, onDone }: ReviewFormProps) 
         className="w-full rounded-card border border-ink/10 bg-surface px-3 py-2 text-ink placeholder:text-ink-muted focus:border-brand-400 focus:outline-none"
       />
 
-      <ReviewPhotoPicker
+      <PhotoPicker
         existing={keptExisting}
         files={files}
+        hint="حتى ٦ صور، بحجم أقصى ٨ ميغابايت لكل صورة — تُرفع بعد نشر التقييم"
         onRemoveExisting={(key) =>
           setKeptExisting((prev) => prev.filter((p) => p.key !== key))
         }

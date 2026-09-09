@@ -7,30 +7,33 @@ const MAX_BYTES = 8 * 1024 * 1024; // 8MB
 
 type ExistingPhoto = { key: string; url: string };
 
-type ReviewPhotoPickerProps = {
-  /** Already-saved photos kept for this review. */
+type PhotoPickerProps = {
+  /** Already-saved photos kept for this entity. */
   existing: ExistingPhoto[];
   /** Newly picked files (not uploaded yet). */
   files: File[];
   max?: number;
+  hint?: string;
   onRemoveExisting: (key: string) => void;
   onAddFiles: (files: File[]) => void;
   onRemoveFile: (index: number) => void;
 };
 
 /**
- * Photo picker that holds files LOCALLY (no upload until the review is saved).
- * Supports multiple images and, on phones, taking a photo or choosing from the
- * gallery/disk. Validates type/size/count with toasts.
+ * Generic photo picker that holds files LOCALLY (no upload until the parent
+ * saves). Supports multiple images and, on phones, taking a photo or choosing
+ * from the gallery/disk. Validates type/size/count with toasts. Used by reviews
+ * and the owner dashboard; the parent uploads on save into its own folder.
  */
-export function ReviewPhotoPicker({
+export function PhotoPicker({
   existing,
   files,
   max = 6,
+  hint = "حتى الحد المسموح، بحجم أقصى ٨ ميغابايت لكل صورة — تُرفع عند الحفظ",
   onRemoveExisting,
   onAddFiles,
   onRemoveFile,
-}: ReviewPhotoPickerProps) {
+}: PhotoPickerProps) {
   const { toast } = useToast();
   const galleryRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
@@ -133,9 +136,7 @@ export function ReviewPhotoPicker({
           e.target.value = "";
         }}
       />
-      <p className="text-xs text-ink-muted">
-        حتى {max} صور، بحجم أقصى ٨ ميغابايت لكل صورة — تُرفع بعد نشر التقييم
-      </p>
+      <p className="text-xs text-ink-muted">{hint}</p>
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { getViewer } from "./lib/viewer";
 import { requireRestaurantOwner } from "./lib/ownership";
 import { appError } from "./lib/errors";
 import { computeSearchText, syncJoinRows } from "./lib/restaurantWrite";
-import { resolveImageUrl, resolveImageUrls } from "./r2";
+import { r2, resolveImageUrl, resolveImageUrls } from "./r2";
 import type { Doc } from "./_generated/dataModel";
 
 const priceTier = v.union(
@@ -202,7 +202,26 @@ export const updateInfo = mutation({
   },
 });
 
-/** Set the cover + gallery photo keys (owner/admin). Keys come from R2 upload. */
+/**
+ * Presign an upload URL for a restaurant photo (owner/admin). The client makes
+ * the key `restaurants/<restaurantId>/<uuid>`; we verify ownership + that the
+ * key is scoped to this restaurant's folder before signing.
+ */
+export const generateUploadUrl = mutation({
+  args: { restaurantId: v.id("restaurants"), key: v.string() },
+  handler: async (ctx, { restaurantId, key }) => {
+    await requireRestaurantOwner(ctx, restaurantId);
+    if (!key.startsWith(`restaurants/${restaurantId}/`)) {
+      return appError("invalid_input", "key must be scoped to the restaurant");
+    }
+    return r2.generateUploadUrl(key);
+  },
+});
+
+/**
+ * Set the cover + gallery photo keys (owner/admin). Any previously-stored key
+ * no longer present (replaced cover / removed gallery image) is deleted from R2.
+ */
 export const setPhotos = mutation({
   args: {
     restaurantId: v.id("restaurants"),
@@ -210,7 +229,17 @@ export const setPhotos = mutation({
     photoKeys: v.optional(v.array(v.string())),
   },
   handler: async (ctx, { restaurantId, coverKey, photoKeys }) => {
-    await requireRestaurantOwner(ctx, restaurantId);
+    const { restaurant } = await requireRestaurantOwner(ctx, restaurantId);
+
+    const oldKeys = [restaurant.coverKey, ...restaurant.photoKeys].filter(
+      (k): k is string => Boolean(k),
+    );
+    const newKeys = [coverKey, ...(photoKeys ?? [])].filter(
+      (k): k is string => Boolean(k),
+    );
+    const removed = oldKeys.filter((k) => !newKeys.includes(k));
+    await Promise.all(removed.map((key) => r2.deleteObject(ctx, key)));
+
     await ctx.db.patch(restaurantId, {
       coverKey,
       photoKeys: photoKeys ?? [],

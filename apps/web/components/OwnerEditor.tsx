@@ -97,7 +97,14 @@ export function OwnerEditor({
 
       <div>
         {tab === "info" && <OwnerInfoForm restaurant={restaurant} />}
-        {tab === "photos" && <OwnerPhotos restaurant={restaurant} />}
+        {tab === "photos" && (
+          <OwnerPhotos
+            // Remount when the saved photo set changes so the picker re-seeds
+            // from freshly server-resolved URLs (no set-state-in-effect).
+            key={`${restaurant.coverKey ?? ""}|${restaurant.photoKeys.join("|")}`}
+            restaurant={restaurant}
+          />
+        )}
         {tab === "menu" && <MenuEditor restaurant={restaurant} />}
         {tab === "reviews" && <OwnerReviews restaurantId={restaurant.id} />}
       </div>
