@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useQuery } from "convex/react";
+import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "@repo/backend";
 import { Dialog } from "./ui/Dialog";
 import { AuthPanel } from "./AuthPanel";
+import { NotificationsBell } from "./NotificationsBell";
 
 /**
  * App header: brand link home + an "الحساب" button that opens the existing
@@ -14,6 +15,7 @@ import { AuthPanel } from "./AuthPanel";
 export function Header() {
   const [accountOpen, setAccountOpen] = useState(false);
   const isAdmin = useQuery(api.admin.isAdmin);
+  const { isAuthenticated } = useConvexAuth();
 
   return (
     <header className="sticky top-0 z-30 border-b border-ink/5 bg-surface/80 backdrop-blur">
@@ -45,6 +47,14 @@ export function Header() {
           >
             <span aria-hidden>❤️</span> المفضلة
           </Link>
+          {isAuthenticated && (
+            <Link
+              href="/submissions"
+              className="inline-flex items-center gap-1.5 rounded-pill border border-ink/10 px-4 py-1.5 text-sm font-medium text-ink transition hover:bg-surface-muted"
+            >
+              <span aria-hidden>📝</span> طلباتي
+            </Link>
+          )}
           {isAdmin === true && (
             <Link
               href="/admin"
@@ -53,6 +63,7 @@ export function Header() {
               <span aria-hidden>🛡️</span> الإدارة
             </Link>
           )}
+          {isAuthenticated && <NotificationsBell />}
           <button
             type="button"
             onClick={() => setAccountOpen(true)}

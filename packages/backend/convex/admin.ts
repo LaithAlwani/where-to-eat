@@ -7,6 +7,7 @@ import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { getViewer, requireAdmin } from "./lib/viewer";
 import { applyRatingDelta } from "./lib/ratings";
+import { notify } from "./lib/notify";
 import { appError } from "./lib/errors";
 import type { Id } from "./_generated/dataModel";
 
@@ -87,14 +88,42 @@ export const pendingRestaurants = query({
   },
 });
 
-/** Set a restaurant's status (publish / reject / close / reopen). */
+/** Set a restaurant's status (publish / reject / close / reopen), with an
+ * optional reason. Notifies the submitter on publish/reject. */
 export const setRestaurantStatus = mutation({
-  args: { restaurantId: v.id("restaurants"), status: restaurantStatus },
-  handler: async (ctx, { restaurantId, status }) => {
+  args: {
+    restaurantId: v.id("restaurants"),
+    status: restaurantStatus,
+    note: v.optional(v.string()),
+  },
+  handler: async (ctx, { restaurantId, status, note }) => {
     await requireAdmin(ctx);
     const restaurant = await ctx.db.get(restaurantId);
     if (!restaurant) return appError("not_found");
-    await ctx.db.patch(restaurantId, { status, updatedAt: Date.now() });
+
+    await ctx.db.patch(restaurantId, {
+      status,
+      moderationNote: status === "rejected" ? note : undefined,
+      updatedAt: Date.now(),
+    });
+
+    if (restaurant.submittedBy) {
+      if (status === "published") {
+        await notify(ctx, restaurant.submittedBy, {
+          type: "submission_published",
+          title: "تم نشر مطعمك 🎉",
+          body: restaurant.nameAr,
+          link: `/restaurant/${restaurant.slug}`,
+        });
+      } else if (status === "rejected") {
+        await notify(ctx, restaurant.submittedBy, {
+          type: "submission_rejected",
+          title: `تم رفض «${restaurant.nameAr}»`,
+          body: note,
+          link: "/submissions",
+        });
+      }
+    }
     return { ok: true };
   },
 });
@@ -134,21 +163,41 @@ export const pendingClaims = query({
   },
 });
 
-/** Approve (grant ownership + promote) or reject a claim. */
+/** Approve (grant ownership + promote) or reject a claim, with an optional
+ * reason. Notifies the claimant either way. */
 export const decideClaim = mutation({
-  args: { claimId: v.id("businessClaims"), approve: v.boolean() },
-  handler: async (ctx, { claimId, approve }) => {
+  args: {
+    claimId: v.id("businessClaims"),
+    approve: v.boolean(),
+    note: v.optional(v.string()),
+  },
+  handler: async (ctx, { claimId, approve, note }) => {
     await requireAdmin(ctx);
     const claim = await ctx.db.get(claimId);
     if (!claim) return appError("not_found");
+    const restaurant = await ctx.db.get(claim.restaurantId);
 
     const now = Date.now();
     if (!approve) {
-      await ctx.db.patch(claimId, { status: "rejected", decidedAt: now });
+      await ctx.db.patch(claimId, {
+        status: "rejected",
+        decidedAt: now,
+        decisionNote: note,
+      });
+      await notify(ctx, claim.userId, {
+        type: "claim_rejected",
+        title: `تم رفض طلب ملكية «${restaurant?.nameAr ?? "المكان"}»`,
+        body: note,
+        link: "/submissions",
+      });
       return { ok: true };
     }
 
-    await ctx.db.patch(claimId, { status: "approved", decidedAt: now });
+    await ctx.db.patch(claimId, {
+      status: "approved",
+      decidedAt: now,
+      decisionNote: note,
+    });
     await ctx.db.patch(claim.restaurantId, {
       ownerId: claim.userId,
       updatedAt: now,
@@ -157,6 +206,12 @@ export const decideClaim = mutation({
     if (owner && owner.role === "user") {
       await ctx.db.patch(claim.userId, { role: "owner" });
     }
+    await notify(ctx, claim.userId, {
+      type: "claim_approved",
+      title: `تمت الموافقة على ملكية «${restaurant?.nameAr ?? "المكان"}»`,
+      body: "يمكنك الآن إدارة الصفحة من لوحة التحكم.",
+      link: "/dashboard",
+    });
     return { ok: true };
   },
 });

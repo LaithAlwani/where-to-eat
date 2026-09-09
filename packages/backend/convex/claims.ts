@@ -63,6 +63,7 @@ export const listMine = query({
           id: c._id,
           status: c.status,
           createdAt: c.createdAt,
+          decisionNote: c.decisionNote ?? null,
           restaurant: restaurant
             ? { slug: restaurant.slug, nameAr: restaurant.nameAr }
             : null,

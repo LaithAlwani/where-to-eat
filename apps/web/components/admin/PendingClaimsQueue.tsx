@@ -8,7 +8,7 @@ import type { Id } from "@repo/backend/dataModel";
 import { formatDate } from "@/lib/format";
 import { getErrorMessage } from "@/lib/errors";
 import { useToast } from "../ui/ToastProvider";
-import { ConfirmDialog } from "../ui/ConfirmDialog";
+import { RejectDialog } from "./RejectDialog";
 import {
   AdminCard,
   EmptyState,
@@ -67,9 +67,9 @@ function ClaimRow({ claim }: { claim: PendingClaim }) {
     }
   }
 
-  async function reject() {
+  async function reject(note: string | undefined) {
     try {
-      await decide({ claimId: claim.id, approve: false });
+      await decide({ claimId: claim.id, approve: false, note });
       toast({ title: "تم رفض الطلب", variant: "success" });
     } catch (err) {
       toast({ title: getErrorMessage(err), variant: "error" });
@@ -127,11 +127,10 @@ function ClaimRow({ claim }: { claim: PendingClaim }) {
         </button>
       </div>
 
-      <ConfirmDialog
+      <RejectDialog
         open={confirmOpen}
         title="رفض طلب الملكية"
-        description="سيتم رفض هذا الطلب. هل أنت متأكد؟"
-        confirmLabel="رفض"
+        description="سيتم رفض هذا الطلب."
         onConfirm={reject}
         onClose={() => setConfirmOpen(false)}
       />

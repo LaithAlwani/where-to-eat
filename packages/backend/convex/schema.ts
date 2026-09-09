@@ -129,6 +129,8 @@ export default defineSchema({
     ratingCount: v.number(),
     // Star distribution [#1★, #2★, #3★, #4★, #5★]; updated with each review.
     ratingBuckets: v.optional(v.array(v.number())),
+    // Admin's reason when status is rejected (shown to the submitter).
+    moderationNote: v.optional(v.string()),
 
     // Normalized Ar+En blob for the search index (built with buildSearchText).
     searchText: v.string(),
@@ -140,6 +142,7 @@ export default defineSchema({
     .index("by_city", ["cityId"])
     .index("by_status", ["status"])
     .index("by_owner", ["ownerId"])
+    .index("by_submittedBy", ["submittedBy"])
     // Ordered top-rated within a status without scanning/sorting in JS.
     .index("by_status_rating", ["status", "ratingAvg"])
     .searchIndex("search_text", {
@@ -204,6 +207,8 @@ export default defineSchema({
     evidence: v.optional(v.string()),
     contactPhone: v.optional(v.string()),
     note: v.optional(v.string()),
+    // Admin's reason on decision (shown to the claimant).
+    decisionNote: v.optional(v.string()),
     reviewedBy: v.optional(v.id("users")),
     createdAt: v.number(),
     decidedAt: v.optional(v.number()),
@@ -244,4 +249,22 @@ export default defineSchema({
   })
     .index("by_cuisine", ["cuisineId"])
     .index("by_restaurant", ["restaurantId"]),
+
+  // In-app notifications (submission/claim decisions, etc.).
+  notifications: defineTable({
+    userId: v.id("users"),
+    type: v.union(
+      v.literal("submission_published"),
+      v.literal("submission_rejected"),
+      v.literal("claim_approved"),
+      v.literal("claim_rejected"),
+    ),
+    title: v.string(),
+    body: v.optional(v.string()),
+    link: v.optional(v.string()),
+    read: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_read", ["userId", "read"]),
 });

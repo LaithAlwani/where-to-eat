@@ -8,7 +8,7 @@ import type { Id } from "@repo/backend/dataModel";
 import { formatDate } from "@/lib/format";
 import { getErrorMessage } from "@/lib/errors";
 import { useToast } from "../ui/ToastProvider";
-import { ConfirmDialog } from "../ui/ConfirmDialog";
+import { RejectDialog } from "./RejectDialog";
 import {
   AdminCard,
   EmptyState,
@@ -67,13 +67,17 @@ function RestaurantRow({ restaurant }: { restaurant: PendingRestaurant }) {
     }
   }
 
-  async function reject() {
+  async function reject(note: string | undefined) {
     try {
-      await setStatus({ restaurantId: restaurant.id, status: "rejected" });
+      await setStatus({
+        restaurantId: restaurant.id,
+        status: "rejected",
+        note,
+      });
       toast({ title: "تم رفض المطعم", variant: "success" });
     } catch (err) {
       toast({ title: getErrorMessage(err), variant: "error" });
-      throw err; // keep the confirm dialog open on failure
+      throw err; // keep the reject dialog open on failure
     }
   }
 
@@ -114,11 +118,10 @@ function RestaurantRow({ restaurant }: { restaurant: PendingRestaurant }) {
         </button>
       </div>
 
-      <ConfirmDialog
+      <RejectDialog
         open={confirmOpen}
         title="رفض المطعم"
-        description={`سيتم رفض "${restaurant.nameAr}". هل أنت متأكد؟`}
-        confirmLabel="رفض"
+        description={`سيتم رفض "${restaurant.nameAr}".`}
         onConfirm={reject}
         onClose={() => setConfirmOpen(false)}
       />
