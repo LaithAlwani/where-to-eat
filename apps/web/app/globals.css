@@ -6,7 +6,7 @@
   --foreground: var(--color-ink);
   /* Bind the shared font tokens to the next/font CSS variables. */
   --font-arabic-family: var(--font-ibm-plex-arabic), system-ui, sans-serif;
-  --font-heading-family: var(--font-tajawal), var(--font-ibm-plex-arabic),
+  --font-heading-family: var(--font-el-messiri), var(--font-ibm-plex-arabic),
     system-ui, sans-serif;
 }
 
@@ -17,8 +17,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #17130f;
-    --foreground: #f3efe9;
+    --background: #14170f;
+    --foreground: #eef0e8;
   }
 }
 

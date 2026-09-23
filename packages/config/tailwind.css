@@ -4,45 +4,48 @@
  * Web imports this after `@import "tailwindcss"`; mobile (NativeWind) maps
  * the same values so both platforms stay visually consistent.
  *
+ * Identity: "ياسمين وزيتون" — jasmine-white + deep laurel/olive as the
+ * primary (uncommon for food apps → distinctive), warm gold as the accent.
+ *
  * RTL note: consumers must use logical utilities (ms/me, ps/pe, start/end,
  * text-start/text-end) so layout mirrors automatically under dir="rtl".
  */
 @theme {
-  /* Brand — warm appetite-forward palette (terracotta/saffron) */
-  --color-brand-50: #fef3ee;
-  --color-brand-100: #fde3d5;
-  --color-brand-200: #fac2aa;
-  --color-brand-300: #f69a74;
-  --color-brand-400: #f16c3f;
-  --color-brand-500: #e04a1f; /* primary */
-  --color-brand-600: #c53914;
-  --color-brand-700: #a32c13;
-  --color-brand-800: #822617;
-  --color-brand-900: #6b2216;
-  --color-brand-950: #3a0e09;
+  /* Brand — deep laurel/olive green (primary). brand-500 holds white text. */
+  --color-brand-50: #f2f6ea;
+  --color-brand-100: #e2ead4;
+  --color-brand-200: #c3d3ad;
+  --color-brand-300: #98b27a;
+  --color-brand-400: #6d8b4e;
+  --color-brand-500: #4c6b30; /* primary (≈4.6:1 on white) */
+  --color-brand-600: #3f5628;
+  --color-brand-700: #344521;
+  --color-brand-800: #2b3a1d;
+  --color-brand-900: #232f19;
+  --color-brand-950: #10160b;
 
-  /* Accent — deep olive/pistachio, a nod to Levantine cuisine */
-  --color-accent-50: #f6f7ee;
-  --color-accent-100: #e9edd3;
-  --color-accent-200: #d4dcaa;
-  --color-accent-300: #b7c577;
-  --color-accent-400: #9aab4f;
-  --color-accent-500: #7c9038; /* accent */
-  --color-accent-600: #5f7129;
-  --color-accent-700: #495723;
-  --color-accent-800: #3c4720;
-  --color-accent-900: #343d1f;
+  /* Accent — warm gold/turmeric */
+  --color-accent-50: #fbf3e3;
+  --color-accent-100: #f6e4c1;
+  --color-accent-200: #eecb8a;
+  --color-accent-300: #e3ad50;
+  --color-accent-400: #d29a35;
+  --color-accent-500: #c98a2b; /* accent */
+  --color-accent-600: #a86f22;
+  --color-accent-700: #85561f;
+  --color-accent-800: #6b451e;
+  --color-accent-900: #593a1d;
 
-  /* Neutrals */
-  --color-surface: #ffffff;
-  --color-surface-muted: #f7f6f4;
-  --color-ink: #1c1a19;
-  --color-ink-muted: #6b6560;
+  /* Neutrals — jasmine near-white paper, warm charcoal ink */
+  --color-surface: #fcfcfa;
+  --color-surface-muted: #f2f3ee;
+  --color-ink: #22271f;
+  --color-ink-muted: #5f665a;
 
   /* Typography — Arabic-first; families are wired per-platform.
-     Body = readable text font; heading = display font for titles. */
+     Body = readable text font; heading = El Messiri (modern-traditional). */
   --font-arabic: var(--font-arabic-family, "IBM Plex Sans Arabic", system-ui, sans-serif);
-  --font-heading: var(--font-heading-family, "Tajawal", "IBM Plex Sans Arabic", system-ui, sans-serif);
+  --font-heading: var(--font-heading-family, "El Messiri", "IBM Plex Sans Arabic", system-ui, sans-serif);
   --font-sans: var(--font-arabic);
 
   /* Radii */
