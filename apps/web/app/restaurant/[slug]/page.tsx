@@ -1,4 +1,5 @@
 import { RestaurantProfile } from "@/components/RestaurantProfile";
+import { PageContainer } from "@/components/PageContainer";
 
 export default async function RestaurantPage(
   props: PageProps<"/restaurant/[slug]">,
@@ -6,8 +7,8 @@ export default async function RestaurantPage(
   const { slug } = await props.params;
 
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6">
+    <PageContainer>
       <RestaurantProfile slug={slug} />
-    </main>
+    </PageContainer>
   );
 }

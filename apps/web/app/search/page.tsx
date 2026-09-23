@@ -1,4 +1,5 @@
 import { SearchResults } from "@/components/SearchResults";
+import { PageContainer } from "@/components/PageContainer";
 
 type PriceTierValue = 1 | 2 | 3 | 4;
 
@@ -16,13 +17,13 @@ export default async function SearchPage(props: PageProps<"/search">) {
   const sp = await props.searchParams;
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-10 sm:px-6">
-      <h1 className="text-2xl font-bold text-ink">البحث</h1>
+    <PageContainer className="flex flex-col gap-6">
+      <h1 className="font-heading text-2xl font-bold text-ink">البحث</h1>
       <SearchResults
         q={firstParam(sp.q) ?? ""}
         cityId={firstParam(sp.cityId)}
         priceTier={parsePriceTier(sp.priceTier)}
       />
-    </main>
+    </PageContainer>
   );
 }

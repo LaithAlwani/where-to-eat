@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans_Arabic, El_Messiri } from "next/font/google";
+import { IBM_Plex_Sans_Arabic, Cairo } from "next/font/google";
 import { ConvexClientProvider } from "./ConvexClientProvider";
 import { Header } from "@/components/Header";
 import { ToastProvider } from "@/components/ui/ToastProvider";
@@ -14,10 +14,10 @@ const ibmPlexArabic = IBM_Plex_Sans_Arabic({
   weight: ["400", "500", "600", "700"],
 });
 
-const elMessiri = El_Messiri({
-  variable: "--font-el-messiri",
+const cairo = Cairo({
+  variable: "--font-cairo",
   subsets: ["arabic", "latin"],
-  weight: ["500", "600", "700"],
+  weight: ["600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -32,7 +32,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       lang="ar"
       dir="rtl"
       data-scroll-behavior="smooth"
-      className={`${ibmPlexArabic.variable} ${elMessiri.variable} h-full antialiased`}
+      className={`${ibmPlexArabic.variable} ${cairo.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <ConvexClientProvider initialToken={initialToken}>

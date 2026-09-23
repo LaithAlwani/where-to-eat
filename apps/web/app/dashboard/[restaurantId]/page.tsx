@@ -1,5 +1,6 @@
 import type { Id } from "@repo/backend/dataModel";
 import { OwnerEditor } from "@/components/OwnerEditor";
+import { PageContainer } from "@/components/PageContainer";
 
 export default async function OwnerEditorPage({
   params,
@@ -9,8 +10,8 @@ export default async function OwnerEditorPage({
   const { restaurantId } = await params;
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
+    <PageContainer>
       <OwnerEditor restaurantId={restaurantId as Id<"restaurants">} />
-    </main>
+    </PageContainer>
   );
 }

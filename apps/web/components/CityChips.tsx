@@ -17,7 +17,7 @@ export function CityChips() {
         {Array.from({ length: 5 }).map((_, i) => (
           <div
             key={i}
-            className="h-8 w-20 animate-pulse rounded-pill bg-surface-muted"
+            className="h-11 w-20 animate-pulse rounded-pill bg-surface-muted"
           />
         ))}
       </div>
@@ -32,7 +32,7 @@ export function CityChips() {
         <li key={city.id}>
           <Link
             href={`/city/${city.slug}`}
-            className="inline-flex items-center rounded-pill bg-accent-50 px-4 py-1.5 text-sm font-medium text-accent-700 transition hover:bg-accent-100"
+            className="inline-flex min-h-11 items-center rounded-pill border border-ink/5 bg-surface-muted px-4 py-2 text-sm font-medium text-ink transition hover:bg-brand-50 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
           >
             {city.nameAr}
           </Link>

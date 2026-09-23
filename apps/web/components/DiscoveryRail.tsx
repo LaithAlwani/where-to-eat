@@ -23,16 +23,23 @@ export function DiscoveryRail({
   hrefMore,
 }: DiscoveryRailProps) {
   return (
-    <section className="flex flex-col gap-3">
+    <section className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-4">
-        <h2 className="flex items-center gap-2 text-xl font-bold text-ink">
-          {emoji && <span aria-hidden>{emoji}</span>}
+        <h2 className="flex items-center gap-2.5 font-heading text-2xl font-bold text-ink">
+          {emoji && (
+            <span
+              aria-hidden
+              className="inline-flex size-9 items-center justify-center rounded-pill bg-brand-50 text-lg text-brand-600"
+            >
+              {emoji}
+            </span>
+          )}
           {title}
         </h2>
         {hrefMore && (
           <Link
             href={hrefMore}
-            className="shrink-0 text-sm font-medium text-brand-600 hover:text-brand-700"
+            className="shrink-0 rounded-pill text-sm font-semibold text-brand-600 transition hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
           >
             المزيد ←
           </Link>

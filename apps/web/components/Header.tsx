@@ -4,9 +4,67 @@ import Link from "next/link";
 import { useState } from "react";
 import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "@repo/backend";
+import type { ComponentType } from "react";
 import { Dialog } from "./ui/Dialog";
 import { AuthPanel } from "./AuthPanel";
 import { NotificationsBell } from "./NotificationsBell";
+
+type IconProps = { className?: string };
+
+const iconBase = "size-4";
+
+function PlusIcon({ className = iconBase }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
+function GridIcon({ className = iconBase }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <rect x="14" y="14" width="7" height="7" rx="1" />
+    </svg>
+  );
+}
+
+function HeartIcon({ className = iconBase }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8Z" />
+    </svg>
+  );
+}
+
+function DocumentIcon({ className = iconBase }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+      <path d="M14 3v5h5M9 13h6M9 17h6" />
+    </svg>
+  );
+}
+
+function ShieldIcon({ className = iconBase }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z" />
+    </svg>
+  );
+}
+
+function UserIcon({ className = iconBase }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21c0-4 3.5-6 8-6s8 2 8 6" />
+    </svg>
+  );
+}
 
 /**
  * Mobile-first app header. On phones: brand + notifications + a hamburger that
@@ -19,12 +77,17 @@ export function Header() {
   const isAdmin = useQuery(api.admin.isAdmin);
   const { isAuthenticated } = useConvexAuth();
 
-  const links = [
-    { href: "/submit", label: "أضف مطعم", icon: "＋", show: true },
-    { href: "/dashboard", label: "لوحة التحكم", icon: "📊", show: true },
-    { href: "/favorites", label: "المفضلة", icon: "❤️", show: true },
-    { href: "/submissions", label: "طلباتي", icon: "📝", show: isAuthenticated },
-    { href: "/admin", label: "الإدارة", icon: "🛡️", show: isAdmin === true },
+  const links: {
+    href: string;
+    label: string;
+    Icon: ComponentType<IconProps>;
+    show: boolean;
+  }[] = [
+    { href: "/submit", label: "أضف مطعم", Icon: PlusIcon, show: true },
+    { href: "/dashboard", label: "لوحة التحكم", Icon: GridIcon, show: true },
+    { href: "/favorites", label: "المفضلة", Icon: HeartIcon, show: true },
+    { href: "/submissions", label: "طلباتي", Icon: DocumentIcon, show: isAuthenticated },
+    { href: "/admin", label: "الإدارة", Icon: ShieldIcon, show: isAdmin === true },
   ].filter((l) => l.show);
 
   const pill =
@@ -45,7 +108,7 @@ export function Header() {
         <nav className="hidden items-center gap-2 md:flex">
           {links.map((l) => (
             <Link key={l.href} href={l.href} className={pill}>
-              <span aria-hidden>{l.icon}</span> {l.label}
+              <l.Icon /> {l.label}
             </Link>
           ))}
           {isAuthenticated && <NotificationsBell />}
@@ -78,9 +141,7 @@ export function Header() {
               onClick={() => setMenuOpen(false)}
               className="flex items-center gap-3 rounded-card px-3 py-3 text-base font-medium text-ink transition hover:bg-surface-muted"
             >
-              <span aria-hidden className="text-lg">
-                {l.icon}
-              </span>
+              <l.Icon className="size-5" />
               {l.label}
             </Link>
           ))}
@@ -92,9 +153,7 @@ export function Header() {
             }}
             className="flex items-center gap-3 rounded-card px-3 py-3 text-start text-base font-medium text-ink transition hover:bg-surface-muted"
           >
-            <span aria-hidden className="text-lg">
-              👤
-            </span>
+            <UserIcon className="size-5" />
             الحساب
           </button>
         </nav>

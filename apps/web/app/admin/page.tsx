@@ -1,9 +1,10 @@
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
+import { PageContainer } from "@/components/PageContainer";
 
 export default function AdminPage() {
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-10 sm:px-6">
+    <PageContainer className="flex flex-col gap-6">
       <AdminDashboard />
-    </main>
+    </PageContainer>
   );
 }
