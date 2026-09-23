@@ -13,6 +13,8 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "*.r2.dev" },
       { protocol: "https", hostname: "*.r2.cloudflarestorage.com" },
+      // Placeholder food photos until real covers are uploaded.
+      { protocol: "https", hostname: "images.unsplash.com" },
       ...(r2PublicHost
         ? [{ protocol: "https" as const, hostname: r2PublicHost }]
         : []),
