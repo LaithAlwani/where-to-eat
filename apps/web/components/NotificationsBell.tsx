@@ -23,15 +23,15 @@ export function NotificationsBell() {
         type="button"
         onClick={() => setOpen(true)}
         aria-label={count > 0 ? `الإشعارات (${badge} غير مقروءة)` : "الإشعارات"}
-        className="relative inline-flex items-center rounded-pill border border-ink/10 px-4 py-1.5 text-sm font-medium text-ink transition hover:bg-surface-muted"
+        className="relative inline-flex size-11 cursor-pointer items-center justify-center rounded-pill border border-line text-ink transition hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
       >
-        <span aria-hidden className="text-base leading-none">
-          🔔
+        <span aria-hidden className="ms text-[1.375rem]">
+          notifications
         </span>
         {count > 0 && (
           <span
             aria-hidden
-            className="absolute -top-1.5 -inset-e-1.5 inline-flex min-w-5 items-center justify-center rounded-pill bg-brand-500 px-1 text-[0.65rem] font-bold leading-tight text-white"
+            className="absolute -top-1.5 -inset-e-1.5 inline-flex min-w-5 items-center justify-center rounded-pill bg-brand-500 px-1 text-[0.65rem] font-bold leading-tight text-on-accent"
           >
             {badge}
           </span>

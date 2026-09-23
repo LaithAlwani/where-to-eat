@@ -150,7 +150,7 @@ export function ReviewForm({ restaurantId, existing, onDone }: ReviewFormProps) 
           type="button"
           onClick={submit}
           disabled={busy}
-          className="rounded-pill bg-brand-500 px-6 py-2 font-medium text-white transition hover:bg-brand-600 disabled:opacity-50"
+          className="rounded-pill bg-brand-500 px-6 py-2 font-medium text-on-accent transition hover:bg-brand-600 disabled:opacity-50"
         >
           {busy ? "جارٍ النشر…" : existing ? "حفظ التعديل" : "نشر التقييم"}
         </button>

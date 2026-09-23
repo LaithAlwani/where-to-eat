@@ -42,7 +42,7 @@ export function AdminDashboard() {
         </p>
         <Link
           href="/"
-          className="rounded-pill bg-brand-500 px-6 py-2 font-medium text-white transition hover:bg-brand-600"
+          className="rounded-pill bg-brand-500 px-6 py-2 font-medium text-on-accent transition hover:bg-brand-600"
         >
           العودة للرئيسية
         </Link>
@@ -70,7 +70,7 @@ export function AdminDashboard() {
               onClick={() => setTab(id)}
               className={`rounded-pill px-5 py-2 text-sm font-medium transition ${
                 active
-                  ? "bg-brand-500 text-white"
+                  ? "bg-brand-500 text-on-accent"
                   : "bg-surface text-ink-muted ring-1 ring-ink/10 hover:bg-surface-muted"
               }`}
             >

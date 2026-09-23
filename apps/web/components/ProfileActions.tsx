@@ -51,7 +51,7 @@ export function ProfileActions({
       {phone && (
         <a
           href={`tel:${phone}`}
-          className="inline-flex items-center gap-1.5 rounded-pill bg-brand-500 px-5 py-2 font-medium text-white transition hover:bg-brand-600"
+          className="inline-flex items-center gap-1.5 rounded-pill bg-brand-500 px-5 py-2 font-medium text-on-accent transition hover:bg-brand-600"
         >
           <span aria-hidden>📞</span> اتصال
         </a>

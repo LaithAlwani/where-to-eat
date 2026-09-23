@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans_Arabic, Cairo } from "next/font/google";
+import { Cairo, Almarai } from "next/font/google";
 import { ConvexClientProvider } from "./ConvexClientProvider";
 import { Header } from "@/components/Header";
 import { ToastProvider } from "@/components/ui/ToastProvider";
@@ -7,17 +7,17 @@ import { Toaster } from "@/components/ui/Toaster";
 import { getToken } from "@/lib/auth-server";
 import "./globals.css";
 
-// Body: IBM Plex Sans Arabic (highly readable). Headings: Tajawal (geometric, bold).
-const ibmPlexArabic = IBM_Plex_Sans_Arabic({
-  variable: "--font-ibm-plex-arabic",
-  subsets: ["arabic", "latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
+// Headings: Cairo (bold, geometric). Body: Almarai (clean Arabic text).
 const cairo = Cairo({
   variable: "--font-cairo",
   subsets: ["arabic", "latin"],
-  weight: ["600", "700", "800"],
+  weight: ["600", "700", "800", "900"],
+});
+
+const almarai = Almarai({
+  variable: "--font-almarai",
+  subsets: ["arabic"],
+  weight: ["400", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -25,15 +25,22 @@ export const metadata: Metadata = {
   description: "اكتشف أحلى المطاعم والكافيهات حواليك في سوريا",
 };
 
+// Apply the saved theme before paint (default dark) to avoid a flash.
+const themeScript = `try{var t=localStorage.getItem('theme');document.documentElement.dataset.theme=(t==='light'||t==='dark')?t:'dark'}catch(e){document.documentElement.dataset.theme='dark'}`;
+
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const initialToken = await getToken();
   return (
     <html
       lang="ar"
       dir="rtl"
+      data-theme="dark"
       data-scroll-behavior="smooth"
-      className={`${ibmPlexArabic.variable} ${cairo.variable} h-full antialiased`}
+      className={`${cairo.variable} ${almarai.variable} h-full antialiased`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="min-h-full flex flex-col">
         <ConvexClientProvider initialToken={initialToken}>
           <ToastProvider>

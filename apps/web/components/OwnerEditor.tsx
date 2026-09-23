@@ -52,7 +52,7 @@ export function OwnerEditor({
         </h2>
         <Link
           href="/dashboard"
-          className="mt-2 rounded-pill bg-brand-500 px-6 py-2 font-medium text-white transition hover:bg-brand-600"
+          className="mt-2 rounded-pill bg-brand-500 px-6 py-2 font-medium text-on-accent transition hover:bg-brand-600"
         >
           العودة للوحة التحكم
         </Link>
@@ -86,7 +86,7 @@ export function OwnerEditor({
             aria-current={tab === t.key}
             className={`rounded-pill px-4 py-1.5 text-sm font-medium transition ${
               tab === t.key
-                ? "bg-brand-500 text-white"
+                ? "bg-brand-500 text-on-accent"
                 : "text-ink-muted hover:bg-surface-muted hover:text-ink"
             }`}
           >

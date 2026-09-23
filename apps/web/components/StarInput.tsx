@@ -60,9 +60,9 @@ export function StarInput({ value, onChange, size = "md" }: StarInputProps) {
             onMouseEnter={() => setHover(star)}
             onFocus={() => setHover(star)}
             onBlur={() => setHover(null)}
-            className={`leading-none transition ${
-              active ? "text-amber-400" : "text-ink/20"
-            } hover:scale-110`}
+            className={`cursor-pointer leading-none transition ${
+              active ? "text-brand-500" : "text-ink-muted/40"
+            } hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500`}
           >
             ★
           </button>

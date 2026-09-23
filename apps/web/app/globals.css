@@ -1,34 +1,53 @@
 @import "tailwindcss";
 @import "@repo/config/tailwind.css";
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,700,1,0&display=swap");
 
+/* Stronger hairline (theme-aware) for outlined pills/cards. */
+@theme {
+  --color-line-2: var(--line-2);
+}
+
+/* Charcoal / amber / teal — dark is the default theme. */
 :root {
-  --background: var(--color-surface);
-  --foreground: var(--color-ink);
-  /* Bind the shared font tokens to the next/font CSS variables. */
-  --font-arabic-family: var(--font-ibm-plex-arabic), system-ui, sans-serif;
-  --font-heading-family: var(--font-cairo), var(--font-ibm-plex-arabic),
-    system-ui, sans-serif;
+  color-scheme: dark;
+  --bg: #14120f;
+  --surface: #1f1b16;
+  --surface-2: #211c15;
+  --line: rgba(247, 242, 231, 0.1);
+  --line-2: rgba(247, 242, 231, 0.18);
+  --ink: #f7f2e7;
+  --muted: #a79e8e;
+  --accent: #f0a63c;
+  --accent-ink: #f0a63c;
+  --on-accent: #14120f;
+  --teal: #3cc7c0;
+
+  --font-arabic-family: var(--font-almarai), system-ui, sans-serif;
+  --font-heading-family: var(--font-cairo), system-ui, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #1c0f0e;
-    --foreground: #f7eae8;
-  }
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #faf6ee;
+  --surface: #ffffff;
+  --surface-2: #f1e7d6;
+  --line: rgba(20, 18, 15, 0.1);
+  --line-2: rgba(20, 18, 15, 0.18);
+  --ink: #14120f;
+  --muted: #6b6356;
+  --accent: #f0a63c;
+  --accent-ink: #a8620a;
+  --on-accent: #14120f;
+  --teal: #0c7a74;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg);
+  color: var(--ink);
   font-family: var(--font-arabic);
+  transition: background 0.25s, color 0.25s;
 }
 
-/* Headings use the display font (Tajawal) automatically. */
 h1,
 h2,
 h3,
@@ -36,16 +55,29 @@ h4 {
   font-family: var(--font-heading);
 }
 
+/* Material Symbols Rounded icon glyphs. */
+.ms {
+  font-family: "Material Symbols Rounded";
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  direction: ltr;
+  -webkit-font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+}
+
 /*
  * Scrollbars — no default/native chunky bars anywhere.
- * `.themed-scroll`: thin, brand-tinted, rounded thumb that fits the UI (use on
- *   the page and any vertical scroll container, incl. dialog bodies).
- * `.no-scrollbar`: fully hidden (used by horizontal rails that provide arrows).
+ * `.themed-scroll`: thin amber-tinted thumb. `.no-scrollbar`: fully hidden.
  */
 @layer utilities {
   .themed-scroll {
     scrollbar-width: thin;
-    scrollbar-color: color-mix(in oklab, var(--color-brand-500) 45%, transparent)
+    scrollbar-color: color-mix(in oklab, var(--accent) 45%, transparent)
       transparent;
   }
   .themed-scroll::-webkit-scrollbar {
@@ -56,19 +88,11 @@ h4 {
     background: transparent;
   }
   .themed-scroll::-webkit-scrollbar-thumb {
-    background-color: color-mix(
-      in oklab,
-      var(--color-brand-500) 40%,
-      transparent
-    );
+    background-color: color-mix(in oklab, var(--accent) 40%, transparent);
     border-radius: 9999px;
   }
   .themed-scroll:hover::-webkit-scrollbar-thumb {
-    background-color: color-mix(
-      in oklab,
-      var(--color-brand-500) 60%,
-      transparent
-    );
+    background-color: color-mix(in oklab, var(--accent) 60%, transparent);
   }
 
   .no-scrollbar {
@@ -80,9 +104,8 @@ h4 {
   }
 }
 
-/* Apply the themed scrollbar to the whole app by default. */
 html {
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in oklab, var(--color-brand-500) 45%, transparent)
+  scrollbar-color: color-mix(in oklab, var(--accent) 45%, transparent)
     transparent;
 }

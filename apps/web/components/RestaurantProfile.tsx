@@ -35,7 +35,7 @@ export function RestaurantProfile({ slug }: { slug: string }) {
         </p>
         <Link
           href="/"
-          className="mt-2 rounded-pill bg-brand-500 px-6 py-2 font-medium text-white transition hover:bg-brand-600"
+          className="mt-2 rounded-pill bg-brand-500 px-6 py-2 font-medium text-on-accent transition hover:bg-brand-600"
         >
           العودة للرئيسية
         </Link>

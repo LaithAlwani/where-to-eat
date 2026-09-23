@@ -1,7 +1,7 @@
 /** Loading placeholder matching RestaurantCard's shape. */
 export function RestaurantCardSkeleton() {
   return (
-    <div className="flex animate-pulse flex-col overflow-hidden rounded-card bg-surface shadow-sm ring-1 ring-ink/5">
+    <div className="flex animate-pulse flex-col overflow-hidden rounded-card border border-line bg-surface shadow-sm">
       <div className="aspect-[4/3] w-full bg-surface-muted" />
       <div className="flex flex-col gap-3 p-4">
         <div className="h-4 w-3/4 rounded bg-surface-muted" />

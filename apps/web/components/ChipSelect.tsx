@@ -48,7 +48,7 @@ export function ChipSelect({
             onClick={() => onToggle(option.slug)}
             className={`inline-flex items-center gap-1.5 rounded-pill px-4 py-1.5 text-sm font-medium transition ${
               active
-                ? "bg-brand-500 text-white"
+                ? "bg-brand-500 text-on-accent"
                 : "bg-surface text-ink ring-1 ring-ink/10 hover:bg-surface-muted"
             }`}
           >

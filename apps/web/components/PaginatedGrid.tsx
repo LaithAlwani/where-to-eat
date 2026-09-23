@@ -65,7 +65,7 @@ export function PaginatedGrid({
           type="button"
           onClick={() => loadMore(pageSize)}
           disabled={status === "LoadingMore"}
-          className="rounded-pill bg-brand-500 px-8 py-3 font-medium text-white transition hover:bg-brand-600 disabled:opacity-50"
+          className="cursor-pointer rounded-pill bg-brand-500 px-8 py-3 font-bold text-on-accent transition hover:bg-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50"
         >
           {status === "LoadingMore" ? "جارٍ التحميل…" : "تحميل المزيد"}
         </button>

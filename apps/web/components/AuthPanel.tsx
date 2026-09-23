@@ -134,7 +134,7 @@ export function AuthPanel() {
       <button
         type="submit"
         disabled={busy}
-        className="rounded-pill bg-brand-500 px-5 py-2 text-white disabled:opacity-50"
+        className="rounded-pill bg-brand-500 px-5 py-2 text-on-accent disabled:opacity-50"
       >
         {mode === "signup" ? "إنشاء حساب" : "دخول"}
       </button>

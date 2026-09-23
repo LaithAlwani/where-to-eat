@@ -32,7 +32,7 @@ export function CityChips() {
         <li key={city.id}>
           <Link
             href={`/city/${city.slug}`}
-            className="inline-flex min-h-11 items-center rounded-pill border border-ink/5 bg-surface-muted px-4 py-2 text-sm font-medium text-ink transition hover:bg-brand-50 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+            className="inline-flex min-h-11 cursor-pointer items-center rounded-pill border border-line bg-surface px-4 py-2 text-sm font-medium text-ink transition hover:border-brand-500 hover:text-accent-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
           >
             {city.nameAr}
           </Link>

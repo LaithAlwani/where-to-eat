@@ -47,7 +47,7 @@ function ToastItem({
       className={[
         "pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-card px-4 py-3 text-start shadow-lg",
         isError
-          ? "bg-brand-600 text-white"
+          ? "bg-brand-600 text-on-accent"
           : "bg-accent-600 text-white",
       ].join(" ")}
     >
@@ -59,7 +59,11 @@ function ToastItem({
         type="button"
         onClick={() => onDismiss(toast.id)}
         aria-label="إغلاق"
-        className="rounded-pill px-1 text-white/80 transition hover:text-white"
+        className={`cursor-pointer rounded-pill px-1 transition ${
+          isError
+            ? "text-on-accent/70 hover:text-on-accent"
+            : "text-white/80 hover:text-white"
+        }`}
       >
         ✕
       </button>

@@ -47,7 +47,7 @@ export function ReviewsSection({
             <button
               type="button"
               onClick={() => setEditing(true)}
-              className="rounded-pill bg-brand-500 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-brand-600"
+              className="rounded-pill bg-brand-500 px-4 py-1.5 text-sm font-medium text-on-accent transition hover:bg-brand-600"
             >
               عدّل تقييمك
             </button>
