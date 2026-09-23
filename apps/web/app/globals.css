@@ -1,8 +1,8 @@
 @import "tailwindcss";
 @import "@repo/config/tailwind.css";
-@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,700,1,0&display=swap");
 
-/* Stronger hairline (theme-aware) for outlined pills/cards. */
+/* Stronger hairline (theme-aware) for outlined pills/cards.
+   (Material Symbols Rounded is loaded via a <link> in app/layout.tsx.) */
 @theme {
   --color-line-2: var(--line-2);
 }
