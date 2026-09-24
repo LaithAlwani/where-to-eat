@@ -5,13 +5,15 @@ import Link from "next/link";
 import { useQuery } from "convex/react";
 import { api } from "@repo/backend";
 import { ModerationTab } from "./ModerationTab";
+import { RestaurantsTab } from "./RestaurantsTab";
 import { UsersTab } from "./UsersTab";
 import { TaxonomyTab } from "./TaxonomyTab";
 
-type Tab = "moderation" | "users" | "taxonomy";
+type Tab = "moderation" | "restaurants" | "users" | "taxonomy";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "moderation", label: "المراجعة" },
+  { id: "restaurants", label: "المطاعم" },
   { id: "users", label: "المستخدمون" },
   { id: "taxonomy", label: "التصنيفات" },
 ];
@@ -82,6 +84,7 @@ export function AdminDashboard() {
 
       <div>
         {tab === "moderation" && <ModerationTab />}
+        {tab === "restaurants" && <RestaurantsTab />}
         {tab === "users" && <UsersTab />}
         {tab === "taxonomy" && <TaxonomyTab />}
       </div>

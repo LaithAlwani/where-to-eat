@@ -9,7 +9,22 @@ import { getViewer, requireAdmin } from "./lib/viewer";
 import { applyRatingDelta } from "./lib/ratings";
 import { notify } from "./lib/notify";
 import { appError } from "./lib/errors";
-import type { Id } from "./_generated/dataModel";
+import { r2, resolveImageUrl } from "./r2";
+import {
+  resolveTaxonomy,
+  computeSearchText,
+  syncJoinRows,
+} from "./lib/restaurantWrite";
+import { normalizeArabic } from "@repo/shared/arabic";
+import type { Id, Doc } from "./_generated/dataModel";
+import type { MutationCtx } from "./_generated/server";
+
+const priceTier = v.union(
+  v.literal(1),
+  v.literal(2),
+  v.literal(3),
+  v.literal(4),
+);
 
 const restaurantStatus = v.union(
   v.literal("pending"),
@@ -307,6 +322,251 @@ export const setReviewStatus = mutation({
         newRating: review.rating,
       });
     }
+    return { ok: true };
+  },
+});
+
+/* ----------------------------- restaurants ------------------------------- */
+
+/**
+ * All restaurants for admin management: paginated over every status, with an
+ * optional Arabic-tolerant name search (reusing the shared `search_text`
+ * index, but WITHOUT the published-only filter the public search applies).
+ */
+export const listRestaurants = query({
+  args: {
+    q: v.optional(v.string()),
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, { q, paginationOpts }) => {
+    await requireAdmin(ctx);
+    const term = normalizeArabic(q ?? "");
+
+    const results =
+      term.length > 0
+        ? await ctx.db
+            .query("restaurants")
+            .withSearchIndex("search_text", (s) =>
+              s.search("searchText", term),
+            )
+            .paginate(paginationOpts)
+        : await ctx.db.query("restaurants").order("desc").paginate(paginationOpts);
+
+    const page = await Promise.all(
+      results.page.map(async (r) => ({
+        id: r._id,
+        slug: r.slug,
+        nameAr: r.nameAr,
+        nameEn: r.nameEn ?? null,
+        cityNameAr: r.cityNameAr,
+        status: r.status,
+        ratingAvg: r.ratingAvg,
+        ratingCount: r.ratingCount,
+        hasOwner: r.ownerId != null,
+        createdAt: r.createdAt,
+        coverUrl: await resolveImageUrl(r.coverKey),
+      })),
+    );
+    return { ...results, page };
+  },
+});
+
+/** Editable view of any restaurant (admin edit form). */
+export const getRestaurant = query({
+  args: { restaurantId: v.id("restaurants") },
+  handler: async (ctx, { restaurantId }) => {
+    await requireAdmin(ctx);
+    const r = await ctx.db.get(restaurantId);
+    if (!r) return null;
+
+    const [city, neighborhood, categories, cuisines, coverUrl] =
+      await Promise.all([
+        ctx.db.get(r.cityId),
+        r.neighborhoodId ? ctx.db.get(r.neighborhoodId) : Promise.resolve(null),
+        Promise.all(r.categoryIds.map((id) => ctx.db.get(id))),
+        Promise.all(r.cuisineIds.map((id) => ctx.db.get(id))),
+        resolveImageUrl(r.coverKey),
+      ]);
+    const photoUrls = await Promise.all(
+      r.photoKeys.map((key) => resolveImageUrl(key)),
+    );
+
+    return {
+      id: r._id,
+      status: r.status,
+      moderationNote: r.moderationNote ?? null,
+      coverKey: r.coverKey ?? null,
+      photoKeys: r.photoKeys,
+      coverUrl,
+      photoUrls: photoUrls.map((u) => u ?? ""),
+      nameAr: r.nameAr,
+      nameEn: r.nameEn ?? null,
+      descriptionAr: r.descriptionAr ?? null,
+      priceTier: r.priceTier,
+      phone: r.phone ?? null,
+      whatsapp: r.whatsapp ?? null,
+      instagram: r.instagram ?? null,
+      website: r.website ?? null,
+      address: r.address ?? null,
+      citySlug: city?.slug ?? null,
+      neighborhoodSlug: neighborhood?.slug ?? null,
+      categorySlugs: categories
+        .filter((c): c is Doc<"categories"> => c !== null)
+        .map((c) => c.slug),
+      cuisineSlugs: cuisines
+        .filter((c): c is Doc<"cuisines"> => c !== null)
+        .map((c) => c.slug),
+    };
+  },
+});
+
+/** Edit any restaurant's core fields (admin); status is left unchanged. */
+export const updateRestaurant = mutation({
+  args: {
+    restaurantId: v.id("restaurants"),
+    nameAr: v.string(),
+    nameEn: v.optional(v.string()),
+    citySlug: v.string(),
+    neighborhoodSlug: v.optional(v.string()),
+    categorySlugs: v.array(v.string()),
+    cuisineSlugs: v.array(v.string()),
+    priceTier,
+    phone: v.optional(v.string()),
+    whatsapp: v.optional(v.string()),
+    instagram: v.optional(v.string()),
+    website: v.optional(v.string()),
+    descriptionAr: v.optional(v.string()),
+    address: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+    const r = await ctx.db.get(args.restaurantId);
+    if (!r) return appError("not_found");
+
+    const tax = await resolveTaxonomy(ctx, {
+      citySlug: args.citySlug,
+      neighborhoodSlug: args.neighborhoodSlug,
+      categorySlugs: args.categorySlugs,
+      cuisineSlugs: args.cuisineSlugs,
+    });
+    if (!tax) return appError("invalid_input", "unknown city");
+
+    await ctx.db.patch(args.restaurantId, {
+      nameAr: args.nameAr,
+      nameEn: args.nameEn,
+      descriptionAr: args.descriptionAr,
+      cityId: tax.city._id,
+      neighborhoodId: tax.neighborhood?._id,
+      cityNameAr: tax.city.nameAr,
+      neighborhoodNameAr: tax.neighborhood?.nameAr,
+      address: args.address,
+      categoryIds: tax.categories.map((c) => c._id),
+      cuisineIds: tax.cuisines.map((c) => c._id),
+      priceTier: args.priceTier,
+      phone: args.phone,
+      whatsapp: args.whatsapp,
+      instagram: args.instagram,
+      website: args.website,
+      searchText: computeSearchText(args.nameAr, args.nameEn, tax),
+      updatedAt: Date.now(),
+    });
+
+    await syncJoinRows(
+      ctx,
+      args.restaurantId,
+      tax.categories.map((c) => c._id),
+      tax.cuisines.map((c) => c._id),
+    );
+    return { ok: true };
+  },
+});
+
+/**
+ * Permanently delete a restaurant and everything hanging off it: reviews (with
+ * their photos, owner responses, and reports), the menu (with item images),
+ * favorites, ownership claims, reports on the place itself, taxonomy join rows,
+ * and the restaurant's own R2 images. Bounded per restaurant (indexed reads).
+ */
+async function cascadeDeleteRestaurant(
+  ctx: MutationCtx,
+  restaurant: Doc<"restaurants">,
+): Promise<void> {
+  const restaurantId = restaurant._id;
+
+  const reviews = await ctx.db
+    .query("reviews")
+    .withIndex("by_restaurant", (q) => q.eq("restaurantId", restaurantId))
+    .collect();
+  for (const review of reviews) {
+    await Promise.all(review.photoKeys.map((key) => r2.deleteObject(ctx, key)));
+    const responses = await ctx.db
+      .query("ownerResponses")
+      .withIndex("by_review", (q) => q.eq("reviewId", review._id))
+      .collect();
+    await Promise.all(responses.map((d) => ctx.db.delete(d._id)));
+    const reviewReports = await ctx.db
+      .query("reports")
+      .withIndex("by_target", (q) =>
+        q.eq("targetType", "review").eq("targetId", review._id),
+      )
+      .collect();
+    await Promise.all(reviewReports.map((d) => ctx.db.delete(d._id)));
+    await ctx.db.delete(review._id);
+  }
+
+  const menu = await ctx.db
+    .query("menus")
+    .withIndex("by_restaurant", (q) => q.eq("restaurantId", restaurantId))
+    .unique();
+  if (menu) {
+    const imageKeys = menu.sections.flatMap((s) =>
+      s.items.map((i) => i.imageKey).filter((k): k is string => Boolean(k)),
+    );
+    await Promise.all(imageKeys.map((key) => r2.deleteObject(ctx, key)));
+    await ctx.db.delete(menu._id);
+  }
+
+  for (const table of ["favorites", "businessClaims"] as const) {
+    const rows = await ctx.db
+      .query(table)
+      .withIndex("by_restaurant", (q) => q.eq("restaurantId", restaurantId))
+      .collect();
+    await Promise.all(rows.map((d) => ctx.db.delete(d._id)));
+  }
+
+  const placeReports = await ctx.db
+    .query("reports")
+    .withIndex("by_target", (q) =>
+      q.eq("targetType", "restaurant").eq("targetId", restaurantId),
+    )
+    .collect();
+  await Promise.all(placeReports.map((d) => ctx.db.delete(d._id)));
+
+  for (const table of ["restaurantCategories", "restaurantCuisines"] as const) {
+    const rows = await ctx.db
+      .query(table)
+      .withIndex("by_restaurant", (q) => q.eq("restaurantId", restaurantId))
+      .collect();
+    await Promise.all(rows.map((d) => ctx.db.delete(d._id)));
+  }
+
+  await Promise.all(
+    [restaurant.coverKey, ...restaurant.photoKeys]
+      .filter((k): k is string => Boolean(k))
+      .map((key) => r2.deleteObject(ctx, key)),
+  );
+
+  await ctx.db.delete(restaurantId);
+}
+
+/** Permanently delete a restaurant and all its related data (admin). */
+export const deleteRestaurant = mutation({
+  args: { restaurantId: v.id("restaurants") },
+  handler: async (ctx, { restaurantId }) => {
+    await requireAdmin(ctx);
+    const restaurant = await ctx.db.get(restaurantId);
+    if (!restaurant) return appError("not_found");
+    await cascadeDeleteRestaurant(ctx, restaurant);
     return { ok: true };
   },
 });
