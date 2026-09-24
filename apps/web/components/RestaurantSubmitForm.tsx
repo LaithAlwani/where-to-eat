@@ -6,86 +6,20 @@ import { useSearchParams } from "next/navigation";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend/dataModel";
-import { toEasternArabicDigits } from "@repo/shared/arabic";
 import { getErrorMessage } from "@/lib/errors";
 import { inputClass, labelClass, hintClass, primaryBtnClass } from "@/lib/ui";
 import { useToast } from "./ui/ToastProvider";
 import { ChipSelect } from "./ChipSelect";
 import { PhotoPicker } from "./PhotoPicker";
-
-type PriceTier = 1 | 2 | 3 | 4;
-
-/** Category slug → Material Symbol glyph (fallback `restaurant`). */
-const CATEGORY_ICON: Record<string, string> = {
-  restaurants: "restaurant",
-  cafes: "local_cafe",
-  sweets: "cake",
-  bakeries: "bakery_dining",
-  "fast-food": "lunch_dining",
-  grill: "outdoor_grill",
-  shawarma: "lunch_dining",
-  seafood: "set_meal",
-  breakfast: "egg_alt",
-  pizza: "local_pizza",
-  burger: "lunch_dining",
-};
-
-const PRICE_TIERS: { tier: PriceTier; label: string }[] = [
-  { tier: 1, label: "رخيص" },
-  { tier: 2, label: "وسط" },
-  { tier: 3, label: "غالي" },
-  { tier: 4, label: "فاخر" },
-];
-
-/** Amber required-field marker. */
-function Required() {
-  return (
-    <span aria-hidden className="text-accent-ink">
-      {" *"}
-    </span>
-  );
-}
-
-/** Section card with an Arabic-Indic numbered marker + heading. */
-function Section({
-  step,
-  title,
-  children,
-}: {
-  step: number;
-  title: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="rounded-card border border-line bg-surface p-5">
-      <div className="mb-4 flex items-center gap-3">
-        <span
-          aria-hidden
-          className="flex size-7 items-center justify-center rounded-full bg-brand-500 text-sm font-bold text-on-accent"
-        >
-          {toEasternArabicDigits(step)}
-        </span>
-        <h2 className="font-heading text-lg font-black text-ink">{title}</h2>
-      </div>
-      <div className="flex flex-col gap-4">{children}</div>
-    </section>
-  );
-}
-
-/** Checklist row: filled teal check when satisfied, muted outline otherwise. */
-function ChecklistRow({ ok, label }: { ok: boolean; label: string }) {
-  return (
-    <li className="flex items-center gap-2 text-sm">
-      <span
-        aria-hidden
-        className={`ms ${ok ? "text-accent-600" : "text-ink-muted"}`}
-      >
-        {ok ? "check_circle" : "radio_button_unchecked"}
-      </span>
-      <span className={ok ? "text-ink" : "text-ink-muted"}>{label}</span>
-    </li>
-  );
-}
+import {
+  type PriceTier,
+  Required,
+  Section,
+  ChecklistRow,
+  CategoryGrid,
+  PriceTierGrid,
+  ContactInput,
+} from "./RestaurantFormUI";
 
 /**
  * Auth-gated form to submit a new restaurant for review. On success shows a
@@ -381,53 +315,11 @@ export function RestaurantSubmitForm() {
               التصنيفات
               <Required />
             </legend>
-            {categories === undefined ? (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3" aria-hidden>
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="min-h-24 animate-pulse rounded-card bg-surface-muted"
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {categories.map((category) => {
-                  const active = categorySlugs.includes(category.slug);
-                  return (
-                    <button
-                      key={category.slug}
-                      type="button"
-                      aria-pressed={active}
-                      onClick={() =>
-                        setCategorySlugs((prev) => toggle(prev, category.slug))
-                      }
-                      className={`flex min-h-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-card border p-3 text-center transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
-                        active
-                          ? "border-brand-500 bg-brand-500 text-on-accent"
-                          : "border-line bg-bg text-ink hover:border-brand-500"
-                      }`}
-                    >
-                      <span
-                        aria-hidden
-                        className={`ms text-3xl ${active ? "text-on-accent" : "text-accent-ink"}`}
-                      >
-                        {CATEGORY_ICON[category.slug] ?? "restaurant"}
-                      </span>
-                      <span className="font-heading text-sm font-black leading-tight text-balance">
-                        {category.nameAr}
-                      </span>
-                      <span
-                        dir="ltr"
-                        className={`text-xs ${active ? "text-on-accent/80" : "text-ink-muted"}`}
-                      >
-                        {category.nameEn}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+            <CategoryGrid
+              categories={categories}
+              selected={categorySlugs}
+              onToggle={(slug) => setCategorySlugs((prev) => toggle(prev, slug))}
+            />
           </fieldset>
 
           <fieldset className="flex flex-col gap-2">
@@ -445,100 +337,47 @@ export function RestaurantSubmitForm() {
             <legend className="mb-2 text-sm font-medium text-ink">
               مستوى السعر
             </legend>
-            <div
-              role="radiogroup"
-              aria-label="مستوى السعر"
-              className="grid grid-cols-4 gap-2"
-            >
-              {PRICE_TIERS.map(({ tier, label }) => {
-                const active = priceTier === tier;
-                return (
-                  <button
-                    key={tier}
-                    type="button"
-                    role="radio"
-                    aria-checked={active}
-                    onClick={() => setPriceTier(tier)}
-                    className={`flex cursor-pointer flex-col items-center justify-center gap-1 rounded-card border py-2.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
-                      active
-                        ? "border-accent-600 bg-accent-600 text-white"
-                        : "border-line bg-surface text-ink-muted hover:border-accent-600"
-                    }`}
-                  >
-                    <span className="font-bold">{"$".repeat(tier)}</span>
-                    <span className="text-xs">{label}</span>
-                  </button>
-                );
-              })}
-            </div>
+            <PriceTierGrid value={priceTier} onChange={setPriceTier} />
           </fieldset>
         </Section>
 
         <Section step={4} title={<>التواصل <span className={hintClass}>(اختياري)</span></>}>
           <div className="grid gap-4 md:grid-cols-2">
-            <label className={labelClass}>
-              الهاتف
-              <div className="flex items-center gap-2 rounded-card border border-ink/10 bg-surface px-3 focus-within:border-brand-400">
-                <span aria-hidden className="ms text-ink-muted">
-                  call
-                </span>
-                <input
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full bg-transparent py-2 text-ink placeholder:text-ink-muted focus:outline-none"
-                  dir="ltr"
-                  inputMode="tel"
-                  placeholder="+963…"
-                />
-              </div>
-            </label>
-            <label className={labelClass}>
-              واتساب
-              <div className="flex items-center gap-2 rounded-card border border-ink/10 bg-surface px-3 focus-within:border-brand-400">
-                <span aria-hidden className="ms text-ink-muted">
-                  chat
-                </span>
-                <input
-                  value={whatsapp}
-                  onChange={(e) => setWhatsapp(e.target.value)}
-                  className="w-full bg-transparent py-2 text-ink placeholder:text-ink-muted focus:outline-none"
-                  dir="ltr"
-                  inputMode="tel"
-                  placeholder="+963…"
-                />
-              </div>
-            </label>
-            <label className={labelClass}>
-              إنستغرام
-              <div className="flex items-center gap-2 rounded-card border border-ink/10 bg-surface px-3 focus-within:border-brand-400">
-                <span aria-hidden className="ms text-ink-muted">
-                  photo_camera
-                </span>
-                <input
-                  value={instagram}
-                  onChange={(e) => setInstagram(e.target.value)}
-                  className="w-full bg-transparent py-2 text-ink placeholder:text-ink-muted focus:outline-none"
-                  dir="ltr"
-                  placeholder="@username"
-                />
-              </div>
-            </label>
-            <label className={labelClass}>
-              الموقع الإلكتروني
-              <div className="flex items-center gap-2 rounded-card border border-ink/10 bg-surface px-3 focus-within:border-brand-400">
-                <span aria-hidden className="ms text-ink-muted">
-                  language
-                </span>
-                <input
-                  value={website}
-                  onChange={(e) => setWebsite(e.target.value)}
-                  className="w-full bg-transparent py-2 text-ink placeholder:text-ink-muted focus:outline-none"
-                  dir="ltr"
-                  inputMode="url"
-                  placeholder="https://…"
-                />
-              </div>
-            </label>
+            <ContactInput
+              label="الهاتف"
+              icon="call"
+              value={phone}
+              onChange={setPhone}
+              dir="ltr"
+              inputMode="tel"
+              placeholder="+963…"
+            />
+            <ContactInput
+              label="واتساب"
+              icon="chat"
+              value={whatsapp}
+              onChange={setWhatsapp}
+              dir="ltr"
+              inputMode="tel"
+              placeholder="+963…"
+            />
+            <ContactInput
+              label="إنستغرام"
+              icon="photo_camera"
+              value={instagram}
+              onChange={setInstagram}
+              dir="ltr"
+              placeholder="@username"
+            />
+            <ContactInput
+              label="الموقع الإلكتروني"
+              icon="language"
+              value={website}
+              onChange={setWebsite}
+              dir="ltr"
+              inputMode="url"
+              placeholder="https://…"
+            />
           </div>
         </Section>
 
