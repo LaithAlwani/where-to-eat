@@ -10,7 +10,8 @@ import {
   computeSearchText,
   syncJoinRows,
 } from "./lib/restaurantWrite";
-import type { Doc } from "./_generated/dataModel";
+import { r2 } from "./r2";
+import type { Doc, Id } from "./_generated/dataModel";
 
 const priceTier = v.union(
   v.literal(1),
@@ -248,6 +249,66 @@ export const resubmit = mutation({
       tax.categories.map((c) => c._id),
       tax.cuisines.map((c) => c._id),
     );
+    return { ok: true };
+  },
+});
+
+/**
+ * Allow the submitter (of a pending/rejected restaurant), its owner, or an
+ * admin to edit its photos. Returns the restaurant when permitted.
+ */
+async function requirePhotoEditor(
+  ctx: MutationCtx,
+  restaurantId: Id<"restaurants">,
+): Promise<Doc<"restaurants">> {
+  const user = await requireViewer(ctx);
+  const restaurant = await ctx.db.get(restaurantId);
+  if (!restaurant) return appError("not_found");
+  const isAdmin = user.role === "admin";
+  const isOwner = restaurant.ownerId === user._id;
+  const isSubmitter =
+    restaurant.submittedBy === user._id &&
+    (restaurant.status === "pending" || restaurant.status === "rejected");
+  if (!isAdmin && !isOwner && !isSubmitter) return appError("forbidden");
+  return restaurant;
+}
+
+/** Presign an upload URL for a restaurant photo during submission. */
+export const generateUploadUrl = mutation({
+  args: { restaurantId: v.id("restaurants"), key: v.string() },
+  handler: async (ctx, { restaurantId, key }) => {
+    await requirePhotoEditor(ctx, restaurantId);
+    if (!key.startsWith(`restaurants/${restaurantId}/`)) {
+      return appError("invalid_input", "key must be scoped to the restaurant");
+    }
+    return r2.generateUploadUrl(key);
+  },
+});
+
+/** Set a submitted restaurant's cover + gallery keys (deletes removed from R2). */
+export const attachPhotos = mutation({
+  args: {
+    restaurantId: v.id("restaurants"),
+    coverKey: v.optional(v.string()),
+    photoKeys: v.optional(v.array(v.string())),
+  },
+  handler: async (ctx, { restaurantId, coverKey, photoKeys }) => {
+    const restaurant = await requirePhotoEditor(ctx, restaurantId);
+
+    const oldKeys = [restaurant.coverKey, ...restaurant.photoKeys].filter(
+      (k): k is string => Boolean(k),
+    );
+    const newKeys = [coverKey, ...(photoKeys ?? [])].filter(
+      (k): k is string => Boolean(k),
+    );
+    const removed = oldKeys.filter((k) => !newKeys.includes(k));
+    await Promise.all(removed.map((key) => r2.deleteObject(ctx, key)));
+
+    await ctx.db.patch(restaurantId, {
+      coverKey,
+      photoKeys: photoKeys ?? [],
+      updatedAt: Date.now(),
+    });
     return { ok: true };
   },
 });

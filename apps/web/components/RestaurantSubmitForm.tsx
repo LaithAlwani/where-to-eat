@@ -11,6 +11,7 @@ import { getErrorMessage } from "@/lib/errors";
 import { inputClass, labelClass, hintClass, primaryBtnClass } from "@/lib/ui";
 import { useToast } from "./ui/ToastProvider";
 import { ChipSelect } from "./ChipSelect";
+import { PhotoPicker } from "./PhotoPicker";
 
 type PriceTier = 1 | 2 | 3 | 4;
 
@@ -95,6 +96,8 @@ export function RestaurantSubmitForm() {
   const { isAuthenticated, isLoading } = useConvexAuth();
   const { toast } = useToast();
   const submit = useMutation(api.submissions.submit);
+  const generateUploadUrl = useMutation(api.submissions.generateUploadUrl);
+  const attachPhotos = useMutation(api.submissions.attachPhotos);
 
   const cities = useQuery(api.taxonomy.listCities);
   const categories = useQuery(api.taxonomy.listCategories);
@@ -115,6 +118,7 @@ export function RestaurantSubmitForm() {
   const [website, setWebsite] = useState("");
   const [descriptionAr, setDescriptionAr] = useState("");
   const [address, setAddress] = useState("");
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [claimOwnership, setClaimOwnership] = useState(false);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<{ claimFiled: boolean } | null>(null);
@@ -139,6 +143,27 @@ export function RestaurantSubmitForm() {
     return list.includes(slug)
       ? list.filter((s) => s !== slug)
       : [...list, slug];
+  }
+
+  /** Upload the picked photos into restaurants/<id>/…; returns the stored keys. */
+  async function uploadPhotos(restaurantId: Id<"restaurants">): Promise<string[]> {
+    const keys: string[] = [];
+    for (const file of photoFiles) {
+      try {
+        const key = `restaurants/${restaurantId}/${crypto.randomUUID()}`;
+        const { url } = await generateUploadUrl({ restaurantId, key });
+        const res = await fetch(url, {
+          method: "PUT",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
+        if (!res.ok) throw new Error("upload failed");
+        keys.push(key);
+      } catch {
+        toast({ title: "تعذّر رفع إحدى الصور", variant: "error" });
+      }
+    }
+    return keys;
   }
 
   async function handleSubmit(event: React.FormEvent) {
@@ -174,6 +199,20 @@ export function RestaurantSubmitForm() {
         address: address.trim() || undefined,
         claimOwnership,
       });
+
+      // Photos upload AFTER the restaurant exists (into restaurants/<id>/…);
+      // first image becomes the cover, the rest the gallery.
+      if (photoFiles.length > 0) {
+        const keys = await uploadPhotos(result.id);
+        if (keys.length > 0) {
+          await attachPhotos({
+            restaurantId: result.id,
+            coverKey: keys[0],
+            photoKeys: keys.slice(1),
+          });
+        }
+      }
+
       toast({ title: "تم إرسال المطعم للمراجعة", variant: "success" });
       setDone({ claimFiled: result.claimFiled });
     } catch (err) {
@@ -231,6 +270,7 @@ export function RestaurantSubmitForm() {
               setCuisineSlugs([]);
               setDescriptionAr("");
               setAddress("");
+              setPhotoFiles([]);
               setPhone("");
               setWhatsapp("");
               setInstagram("");
@@ -502,7 +542,21 @@ export function RestaurantSubmitForm() {
           </div>
         </Section>
 
-        <Section step={5} title={<>نبذة <span className={hintClass}>(اختياري)</span></>}>
+        <Section step={5} title={<>الصور <span className={hintClass}>(اختياري)</span></>}>
+          <PhotoPicker
+            existing={[]}
+            files={photoFiles}
+            max={6}
+            hint="أضف صور المطعم — أول صورة تكون الغلاف. تُرفع بعد الإرسال."
+            onRemoveExisting={() => {}}
+            onAddFiles={(added) => setPhotoFiles((prev) => [...prev, ...added])}
+            onRemoveFile={(index) =>
+              setPhotoFiles((prev) => prev.filter((_, i) => i !== index))
+            }
+          />
+        </Section>
+
+        <Section step={6} title={<>نبذة <span className={hintClass}>(اختياري)</span></>}>
           <textarea
             value={descriptionAr}
             onChange={(e) => setDescriptionAr(e.target.value)}
