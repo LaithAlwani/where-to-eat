@@ -6,11 +6,11 @@
       "cache": false
     },
     "build": {
-      "dependsOn": ["^build", "codegen"],
+      "dependsOn": ["^build"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
     "typecheck": {
-      "dependsOn": ["^build", "codegen"]
+      "dependsOn": ["^build"]
     },
     "lint": {
       "dependsOn": ["^build"]
