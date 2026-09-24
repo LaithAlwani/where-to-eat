@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend/dataModel";
@@ -27,7 +28,9 @@ export function RestaurantSubmitForm() {
   const categories = useQuery(api.taxonomy.listCategories);
   const cuisines = useQuery(api.taxonomy.listCuisines);
 
-  const [nameAr, setNameAr] = useState("");
+  // Prefill the name from a contextual "add it" search link (/submit?name=…).
+  const searchParams = useSearchParams();
+  const [nameAr, setNameAr] = useState(() => searchParams.get("name") ?? "");
   const [nameEn, setNameEn] = useState("");
   const [cityId, setCityId] = useState<Id<"cities"> | "">("");
   const [neighborhoodSlug, setNeighborhoodSlug] = useState("");

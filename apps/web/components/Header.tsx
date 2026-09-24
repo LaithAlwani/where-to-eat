@@ -2,46 +2,32 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useConvexAuth, useQuery } from "convex/react";
-import { api } from "@repo/backend";
+import { useConvexAuth } from "convex/react";
 import { Dialog } from "./ui/Dialog";
 import { AuthPanel } from "./AuthPanel";
+import { AccountMenu } from "./AccountMenu";
 import { NotificationsBell } from "./NotificationsBell";
 import { ThemeToggle } from "./ThemeToggle";
 
-type NavLink = {
-  href: string;
-  label: string;
-  icon: string;
-  show: boolean;
-  primary?: boolean;
-};
-
 /**
- * Mobile-first app header. On phones: brand + notifications + theme toggle + a
- * hamburger that opens a menu dialog. From md up the nav links sit inline, with
- * "أضف مطعم" as the amber CTA. Links are defined once and rendered in both places.
+ * Consumer-first header. The top bar stays minimal (brand, add-a-place as a
+ * secondary action, favorites, account). Personal + role-gated tools
+ * (طلباتي / لوحة التحكم / الإدارة) live inside the account menu, revealed by
+ * role — everyday visitors never see business/admin entries.
  */
 export function Header() {
-  const [accountOpen, setAccountOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const isAdmin = useQuery(api.admin.isAdmin);
   const { isAuthenticated } = useConvexAuth();
-
-  const links: NavLink[] = (
-    [
-      { href: "/submit", label: "أضف مطعم", icon: "add", show: true, primary: true },
-      { href: "/dashboard", label: "لوحة التحكم", icon: "grid_view", show: true },
-      { href: "/favorites", label: "المفضلة", icon: "favorite", show: true },
-      { href: "/submissions", label: "طلباتي", icon: "receipt_long", show: isAuthenticated },
-      { href: "/admin", label: "الإدارة", icon: "shield", show: isAdmin === true },
-    ] satisfies NavLink[]
-  ).filter((l) => l.show);
+  const [accountOpen, setAccountOpen] = useState(false); // signed-in menu
+  const [authOpen, setAuthOpen] = useState(false); // signed-out login/signup
+  const [menuOpen, setMenuOpen] = useState(false); // mobile sheet
 
   const ghostPill =
     "inline-flex items-center gap-1.5 rounded-pill px-3 py-2 text-sm font-medium text-ink transition hover:bg-surface-muted cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500";
-  const ctaPill =
-    "inline-flex items-center gap-1.5 rounded-pill bg-brand-500 px-4 py-2 text-sm font-bold text-on-accent transition hover:bg-brand-600 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500";
+
+  function openAccount() {
+    if (isAuthenticated) setAccountOpen(true);
+    else setAuthOpen(true);
+  }
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-bg/90 backdrop-blur">
@@ -55,45 +41,37 @@ export function Header() {
           </Link>
 
           {/* Desktop location (static) */}
-          <button
-            type="button"
-            className="hidden h-11 cursor-pointer items-center gap-1.5 rounded-pill border border-line-2 px-4 text-sm font-medium text-ink transition hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 md:inline-flex"
-          >
+          <span className="hidden h-11 items-center gap-1.5 rounded-pill border border-line-2 px-4 text-sm font-medium text-ink md:inline-flex">
             <span className="ms text-[1.25rem] text-accent-ink" aria-hidden>
               location_on
             </span>
             دمشق
-            <span className="ms text-[1.25rem] text-ink-muted" aria-hidden>
-              expand_more
-            </span>
-          </button>
+          </span>
         </div>
 
-        {/* Desktop nav */}
+        {/* Desktop nav — everyday only */}
         <nav className="hidden items-center gap-1.5 md:flex">
-          {links.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={l.primary ? ctaPill : ghostPill}
-            >
+          <Link href="/submit" className={ghostPill}>
+            <span className="ms text-[1.25rem]" aria-hidden>
+              add
+            </span>
+            أضف مطعم
+          </Link>
+          {isAuthenticated && (
+            <Link href="/favorites" className={ghostPill}>
               <span className="ms text-[1.25rem]" aria-hidden>
-                {l.icon}
+                favorite
               </span>
-              {l.label}
+              المفضلة
             </Link>
-          ))}
+          )}
           <ThemeToggle />
           {isAuthenticated && <NotificationsBell />}
-          <button
-            type="button"
-            onClick={() => setAccountOpen(true)}
-            className={ghostPill}
-          >
+          <button type="button" onClick={openAccount} className={ghostPill}>
             <span className="ms text-[1.25rem]" aria-hidden>
               account_circle
             </span>
-            الحساب
+            {isAuthenticated ? "حسابي" : "تسجيل الدخول"}
           </button>
         </nav>
 
@@ -114,42 +92,56 @@ export function Header() {
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile menu: everyday links + (account section | sign-in) */}
       <Dialog open={menuOpen} onClose={() => setMenuOpen(false)} title="القائمة">
         <nav className="flex flex-col gap-1">
-          {links.map((l) => (
+          {[
+            { href: "/", label: "الرئيسية", icon: "home" },
+            { href: "/favorites", label: "المفضلة", icon: "favorite" },
+            { href: "/submit", label: "أضف مطعم", icon: "add" },
+          ].map((l) => (
             <Link
               key={l.href}
               href={l.href}
               onClick={() => setMenuOpen(false)}
               className="flex cursor-pointer items-center gap-3 rounded-card px-3 py-3 text-base font-medium text-ink transition hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
             >
-              <span
-                className={`ms text-[1.375rem] ${l.primary ? "text-accent-ink" : ""}`}
-                aria-hidden
-              >
+              <span className="ms text-[1.375rem]" aria-hidden>
                 {l.icon}
               </span>
               {l.label}
             </Link>
           ))}
-          <button
-            type="button"
-            onClick={() => {
-              setMenuOpen(false);
-              setAccountOpen(true);
-            }}
-            className="flex cursor-pointer items-center gap-3 rounded-card px-3 py-3 text-start text-base font-medium text-ink transition hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-          >
-            <span className="ms text-[1.375rem]" aria-hidden>
-              account_circle
-            </span>
-            الحساب
-          </button>
+
+          <div className="my-1 h-px bg-line" />
+
+          {isAuthenticated ? (
+            <AccountMenu onNavigate={() => setMenuOpen(false)} />
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setMenuOpen(false);
+                setAuthOpen(true);
+              }}
+              className="flex cursor-pointer items-center gap-3 rounded-card px-3 py-3 text-start text-base font-medium text-ink transition hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+            >
+              <span className="ms text-[1.375rem]" aria-hidden>
+                account_circle
+              </span>
+              تسجيل الدخول
+            </button>
+          )}
         </nav>
       </Dialog>
 
-      <Dialog open={accountOpen} onClose={() => setAccountOpen(false)} title="الحساب">
+      {/* Desktop account menu (signed in) */}
+      <Dialog open={accountOpen} onClose={() => setAccountOpen(false)} title="حسابي">
+        <AccountMenu onNavigate={() => setAccountOpen(false)} />
+      </Dialog>
+
+      {/* Login / signup (signed out) */}
+      <Dialog open={authOpen} onClose={() => setAuthOpen(false)} title="الحساب">
         <AuthPanel />
       </Dialog>
     </header>

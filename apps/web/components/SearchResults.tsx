@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery, usePaginatedQuery } from "convex/react";
 import { api } from "@repo/backend";
@@ -110,12 +111,30 @@ export function SearchResults({ q, cityId, priceTier }: SearchResultsProps) {
       )}
 
       {trimmed ? (
-        <PaginatedGrid
-          results={pagination.results}
-          status={pagination.status as PaginationStatus}
-          loadMore={pagination.loadMore}
-          emptyMessage="لا توجد نتائج مطابقة لبحثك"
-        />
+        <>
+          <PaginatedGrid
+            results={pagination.results}
+            status={pagination.status as PaginationStatus}
+            loadMore={pagination.loadMore}
+            emptyMessage="لا توجد نتائج مطابقة لبحثك"
+          />
+
+          {/* Contextual add: high intent when someone searched a specific place. */}
+          {pagination.status !== "LoadingFirstPage" && (
+            <div className="flex flex-col items-center gap-3 rounded-card border border-line bg-surface-muted px-6 py-8 text-center">
+              <p className="text-ink-muted">ما لقيت المكان اللي بتدوّر عليه؟</p>
+              <Link
+                href={`/submit?name=${encodeURIComponent(trimmed)}`}
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-pill bg-brand-500 px-5 py-2 font-bold text-on-accent transition hover:bg-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+              >
+                <span className="ms text-[1.25rem]" aria-hidden>
+                  add
+                </span>
+                أضف «{trimmed}»
+              </Link>
+            </div>
+          )}
+        </>
       ) : (
         <div className="flex flex-col items-center gap-2 rounded-card bg-surface-muted px-6 py-16 text-center">
           <span aria-hidden className="text-4xl">
