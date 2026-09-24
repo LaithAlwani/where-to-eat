@@ -8,20 +8,21 @@ import authConfig from "./auth.config";
 const siteUrl = process.env.SITE_URL!;
 
 /**
- * Origins allowed to call the auth API. Defaults to SITE_URL plus its common
- * localhost/127.0.0.1 twin (so dev doesn't 403 with "invalid origin" when the
- * browser uses a different host than SITE_URL). Set TRUSTED_ORIGINS (comma-
- * separated) to add production origins.
+ * Origins allowed to call the auth API. Always trusts the common local dev
+ * ports (localhost + 127.0.0.1 on 3000/3001/3002) — Next.js hops to 3001/3002
+ * when 3000 is busy, which would otherwise 403 with "invalid origin". SITE_URL
+ * and TRUSTED_ORIGINS (comma-separated) add production origins.
  */
 function trustedOrigins(): string[] {
+  const devOrigins = [3000, 3001, 3002].flatMap((port) => [
+    `http://localhost:${port}`,
+    `http://127.0.0.1:${port}`,
+  ]);
   const extra = (process.env.TRUSTED_ORIGINS ?? "")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-  const set = new Set([siteUrl, ...extra]);
-  if (siteUrl?.includes("localhost")) set.add(siteUrl.replace("localhost", "127.0.0.1"));
-  if (siteUrl?.includes("127.0.0.1")) set.add(siteUrl.replace("127.0.0.1", "localhost"));
-  return [...set].filter(Boolean);
+  return [...new Set([siteUrl, ...devOrigins, ...extra].filter(Boolean))];
 }
 
 export const authComponent = createClient<DataModel>(components.betterAuth);
