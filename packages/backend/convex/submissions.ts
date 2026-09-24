@@ -154,6 +154,8 @@ export const getMineForEdit = query({
     if (!viewer) return null;
     const r = await ctx.db.get(restaurantId);
     if (!r || r.submittedBy !== viewer._id) return null;
+    // A place someone else has since claimed is edited by its owner, not us.
+    if (r.ownerId && r.ownerId !== viewer._id) return null;
 
     const [city, neighborhood, categories, cuisines, coverUrl, photoUrls] =
       await Promise.all([
@@ -194,7 +196,10 @@ export const getMineForEdit = query({
   },
 });
 
-/** Edit a rejected/pending submission and send it back for review. */
+/**
+ * Edit a submission the viewer proposed. Pending/rejected edits go back to the
+ * review queue; edits to an already-published place stay published (go live).
+ */
 export const resubmit = mutation({
   args: {
     restaurantId: v.id("restaurants"),
@@ -217,9 +222,13 @@ export const resubmit = mutation({
     const r = await ctx.db.get(args.restaurantId);
     if (!r) return appError("not_found");
     if (r.submittedBy !== user._id) return appError("forbidden");
-    if (r.status !== "rejected" && r.status !== "pending") {
-      return appError("invalid_input", "not resubmittable");
+    // Can't edit a place someone else now owns, or one an admin has closed.
+    if (r.ownerId && r.ownerId !== user._id) return appError("forbidden");
+    if (r.status === "closed") {
+      return appError("invalid_input", "not editable");
     }
+    // Published edits stay published (go live); pending/rejected re-enter review.
+    const nextStatus = r.status === "published" ? "published" : "pending";
 
     const tax = await resolveTaxonomy(ctx, {
       citySlug: args.citySlug,
@@ -245,7 +254,7 @@ export const resubmit = mutation({
       whatsapp: args.whatsapp,
       instagram: args.instagram,
       website: args.website,
-      status: "pending",
+      status: nextStatus,
       moderationNote: undefined,
       searchText: computeSearchText(args.nameAr, args.nameEn, tax),
       updatedAt: Date.now(),
@@ -262,8 +271,9 @@ export const resubmit = mutation({
 });
 
 /**
- * Allow the submitter (of a pending/rejected restaurant), its owner, or an
- * admin to edit its photos. Returns the restaurant when permitted.
+ * Allow an admin, the owner, or the original submitter (as long as nobody else
+ * has claimed it and it isn't closed) to edit a restaurant's photos. Returns
+ * the restaurant when permitted.
  */
 async function requirePhotoEditor(
   ctx: MutationCtx,
@@ -276,7 +286,8 @@ async function requirePhotoEditor(
   const isOwner = restaurant.ownerId === user._id;
   const isSubmitter =
     restaurant.submittedBy === user._id &&
-    (restaurant.status === "pending" || restaurant.status === "rejected");
+    !restaurant.ownerId &&
+    restaurant.status !== "closed";
   if (!isAdmin && !isOwner && !isSubmitter) return appError("forbidden");
   return restaurant;
 }

@@ -207,7 +207,13 @@ function EditForm({
         photoKeys: finalKeys.slice(1),
       });
 
-      toast({ title: "تم إرسال التعديلات للمراجعة", variant: "success" });
+      toast({
+        title:
+          editable.status === "published"
+            ? "تم حفظ التعديلات"
+            : "تم إرسال التعديلات للمراجعة",
+        variant: "success",
+      });
       router.push("/submissions");
     } catch (err) {
       toast({ title: getErrorMessage(err), variant: "error" });
