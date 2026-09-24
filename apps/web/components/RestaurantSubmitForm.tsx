@@ -6,13 +6,85 @@ import { useSearchParams } from "next/navigation";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend/dataModel";
+import { toEasternArabicDigits } from "@repo/shared/arabic";
 import { getErrorMessage } from "@/lib/errors";
 import { inputClass, labelClass, hintClass, primaryBtnClass } from "@/lib/ui";
 import { useToast } from "./ui/ToastProvider";
 import { ChipSelect } from "./ChipSelect";
-import { PriceTierInput } from "./PriceTierInput";
 
 type PriceTier = 1 | 2 | 3 | 4;
+
+/** Category slug → Material Symbol glyph (fallback `restaurant`). */
+const CATEGORY_ICON: Record<string, string> = {
+  restaurants: "restaurant",
+  cafes: "local_cafe",
+  sweets: "cake",
+  bakeries: "bakery_dining",
+  "fast-food": "lunch_dining",
+  grill: "outdoor_grill",
+  shawarma: "lunch_dining",
+  seafood: "set_meal",
+  breakfast: "egg_alt",
+  pizza: "local_pizza",
+  burger: "lunch_dining",
+};
+
+const PRICE_TIERS: { tier: PriceTier; label: string }[] = [
+  { tier: 1, label: "رخيص" },
+  { tier: 2, label: "وسط" },
+  { tier: 3, label: "غالي" },
+  { tier: 4, label: "فاخر" },
+];
+
+/** Amber required-field marker. */
+function Required() {
+  return (
+    <span aria-hidden className="text-accent-ink">
+      {" *"}
+    </span>
+  );
+}
+
+/** Section card with an Arabic-Indic numbered marker + heading. */
+function Section({
+  step,
+  title,
+  children,
+}: {
+  step: number;
+  title: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-card border border-line bg-surface p-5">
+      <div className="mb-4 flex items-center gap-3">
+        <span
+          aria-hidden
+          className="flex size-7 items-center justify-center rounded-full bg-brand-500 text-sm font-bold text-on-accent"
+        >
+          {toEasternArabicDigits(step)}
+        </span>
+        <h2 className="font-heading text-lg font-black text-ink">{title}</h2>
+      </div>
+      <div className="flex flex-col gap-4">{children}</div>
+    </section>
+  );
+}
+
+/** Checklist row: filled teal check when satisfied, muted outline otherwise. */
+function ChecklistRow({ ok, label }: { ok: boolean; label: string }) {
+  return (
+    <li className="flex items-center gap-2 text-sm">
+      <span
+        aria-hidden
+        className={`ms ${ok ? "text-accent-600" : "text-ink-muted"}`}
+      >
+        {ok ? "check_circle" : "radio_button_unchecked"}
+      </span>
+      <span className={ok ? "text-ink" : "text-ink-muted"}>{label}</span>
+    </li>
+  );
+}
 
 /**
  * Auth-gated form to submit a new restaurant for review. On success shows a
@@ -53,6 +125,15 @@ export function RestaurantSubmitForm() {
   );
 
   const selectedCity = cities?.find((c) => c.id === cityId) ?? null;
+  const selectedCategoryNames =
+    categories?.filter((c) => categorySlugs.includes(c.slug)).map((c) => c.nameAr) ??
+    [];
+
+  // Checklist gates the submit button.
+  const hasName = nameAr.trim() !== "";
+  const hasCity = !!selectedCity;
+  const hasCategory = categorySlugs.length > 0;
+  const canSubmit = hasName && hasCity && hasCategory;
 
   function toggle(list: string[], slug: string): string[] {
     return list.includes(slug)
@@ -108,11 +189,13 @@ export function RestaurantSubmitForm() {
 
   if (!isAuthenticated) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-card bg-surface-muted px-6 py-16 text-center">
+      <div className="flex flex-col items-center gap-3 rounded-card border border-line bg-surface-muted px-6 py-16 text-center">
         <span aria-hidden className="text-5xl">
           🔐
         </span>
-        <h2 className="text-xl font-bold text-ink">سجّل الدخول لإضافة مطعم</h2>
+        <h2 className="font-heading text-xl font-black text-ink">
+          سجّل الدخول لإضافة مطعم
+        </h2>
         <p className="text-ink-muted">
           أنشئ حساباً أو سجّل الدخول من زر «الحساب» في الأعلى للمتابعة.
         </p>
@@ -122,14 +205,14 @@ export function RestaurantSubmitForm() {
 
   if (done) {
     return (
-      <div className="flex flex-col items-center gap-4 rounded-card bg-surface-muted px-6 py-16 text-center">
+      <div className="flex flex-col items-center gap-4 rounded-card border border-line bg-surface-muted px-6 py-16 text-center">
         <span aria-hidden className="text-5xl">
           🎉
         </span>
-        <h2 className="text-xl font-bold text-ink">
+        <h2 className="font-heading text-xl font-black text-ink">
           شكراً! سيظهر المطعم بعد مراجعته.
         </h2>
-        <p className="text-ink-muted">
+        <p className="max-w-md text-ink-muted">
           {done.claimFiled
             ? "سجّلنا طلبك مع طلب ملكية المكان — سنراجعهما وننشرهما قريباً. تابع الحالة من لوحة التحكم."
             : "راجعنا طلبك وسننشره قريباً. يمكنك متابعة حالة مطاعمك من لوحة التحكم."}
@@ -154,7 +237,7 @@ export function RestaurantSubmitForm() {
               setWebsite("");
               setClaimOwnership(false);
             }}
-            className="rounded-pill border border-ink-muted/30 px-6 py-2 font-medium text-ink transition hover:bg-surface"
+            className="cursor-pointer rounded-pill border border-line-2 px-6 py-2 font-medium text-ink transition hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
           >
             إضافة مطعم آخر
           </button>
@@ -164,182 +247,346 @@ export function RestaurantSubmitForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className={labelClass}>
-          اسم المطعم (بالعربية) *
-          <input
-            value={nameAr}
-            onChange={(e) => setNameAr(e.target.value)}
-            className={inputClass}
-            placeholder="مثال: مطعم الشام"
-          />
-        </label>
-        <label className={labelClass}>
-          الاسم بالإنجليزية <span className={hintClass}>(اختياري)</span>
-          <input
-            value={nameEn}
-            onChange={(e) => setNameEn(e.target.value)}
-            className={inputClass}
-            dir="ltr"
-            placeholder="Al Sham Restaurant"
-          />
-        </label>
-      </div>
+    <form
+      onSubmit={handleSubmit}
+      className="md:grid md:grid-cols-[1fr_20rem] md:items-start md:gap-6"
+    >
+      {/* Form column (DOM-first → right in RTL on desktop, top on mobile). */}
+      <div className="flex flex-col gap-6">
+        <Section step={1} title="الاسم">
+          <label className={labelClass}>
+            <span>
+              اسم المطعم (بالعربية)
+              <Required />
+            </span>
+            <input
+              value={nameAr}
+              onChange={(e) => setNameAr(e.target.value)}
+              className={inputClass}
+              placeholder="مثال: مطعم الشام"
+            />
+          </label>
+          <label className={labelClass}>
+            <span>
+              الاسم بالإنجليزية <span className={hintClass}>(اختياري)</span>
+            </span>
+            <input
+              value={nameEn}
+              onChange={(e) => setNameEn(e.target.value)}
+              className={inputClass}
+              dir="ltr"
+              placeholder="Al Sham Restaurant"
+            />
+          </label>
+        </Section>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className={labelClass}>
-          المدينة *
-          <select
-            value={cityId}
-            onChange={(e) => {
-              setCityId(e.target.value as Id<"cities">);
-              setNeighborhoodSlug("");
-            }}
-            className={inputClass}
-          >
-            <option value="">اختر المدينة…</option>
-            {cities?.map((city) => (
-              <option key={city.id} value={city.id}>
-                {city.nameAr}
+        <Section step={2} title="الموقع">
+          <label className={labelClass}>
+            <span>
+              المدينة
+              <Required />
+            </span>
+            <select
+              value={cityId}
+              onChange={(e) => {
+                setCityId(e.target.value as Id<"cities">);
+                setNeighborhoodSlug("");
+              }}
+              className={`${inputClass} cursor-pointer`}
+            >
+              <option value="">اختر المدينة…</option>
+              {cities?.map((city) => (
+                <option key={city.id} value={city.id}>
+                  {city.nameAr}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className={labelClass}>
+            <span>
+              الحي <span className={hintClass}>(اختياري)</span>
+            </span>
+            <select
+              value={neighborhoodSlug}
+              onChange={(e) => setNeighborhoodSlug(e.target.value)}
+              disabled={!cityId}
+              className={`${inputClass} cursor-pointer disabled:cursor-not-allowed disabled:opacity-50`}
+            >
+              <option value="">
+                {cityId ? "اختر الحي…" : "اختر المدينة أولاً"}
               </option>
-            ))}
-          </select>
-        </label>
-        <label className={labelClass}>
-          الحي <span className={hintClass}>(اختياري)</span>
-          <select
-            value={neighborhoodSlug}
-            onChange={(e) => setNeighborhoodSlug(e.target.value)}
-            disabled={!cityId}
-            className={`${inputClass} disabled:opacity-50`}
+              {neighborhoods?.map((n) => (
+                <option key={n.id} value={n.slug}>
+                  {n.nameAr}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className={labelClass}>
+            <span>
+              العنوان <span className={hintClass}>(اختياري)</span>
+            </span>
+            <input
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              className={inputClass}
+              placeholder="الشارع، بجانب…"
+            />
+          </label>
+        </Section>
+
+        <Section step={3} title="شو بيقدّم؟">
+          <fieldset className="flex flex-col gap-2">
+            <legend className="mb-2 text-sm font-medium text-ink">
+              التصنيفات
+              <Required />
+            </legend>
+            {categories === undefined ? (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3" aria-hidden>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="min-h-24 animate-pulse rounded-card bg-surface-muted"
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {categories.map((category) => {
+                  const active = categorySlugs.includes(category.slug);
+                  return (
+                    <button
+                      key={category.slug}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() =>
+                        setCategorySlugs((prev) => toggle(prev, category.slug))
+                      }
+                      className={`flex min-h-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-card border p-3 text-center transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
+                        active
+                          ? "border-brand-500 bg-brand-500 text-on-accent"
+                          : "border-line bg-bg text-ink hover:border-brand-500"
+                      }`}
+                    >
+                      <span
+                        aria-hidden
+                        className={`ms text-3xl ${active ? "text-on-accent" : "text-accent-ink"}`}
+                      >
+                        {CATEGORY_ICON[category.slug] ?? "restaurant"}
+                      </span>
+                      <span className="font-heading text-sm font-black leading-tight text-balance">
+                        {category.nameAr}
+                      </span>
+                      <span
+                        dir="ltr"
+                        className={`text-xs ${active ? "text-on-accent/80" : "text-ink-muted"}`}
+                      >
+                        {category.nameEn}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </fieldset>
+
+          <fieldset className="flex flex-col gap-2">
+            <legend className="mb-2 text-sm font-medium text-ink">
+              المطابخ <span className={hintClass}>(اختياري)</span>
+            </legend>
+            <ChipSelect
+              options={cuisines}
+              selected={cuisineSlugs}
+              onToggle={(slug) => setCuisineSlugs((prev) => toggle(prev, slug))}
+            />
+          </fieldset>
+
+          <fieldset className="flex flex-col gap-2">
+            <legend className="mb-2 text-sm font-medium text-ink">
+              مستوى السعر
+            </legend>
+            <div
+              role="radiogroup"
+              aria-label="مستوى السعر"
+              className="grid grid-cols-4 gap-2"
+            >
+              {PRICE_TIERS.map(({ tier, label }) => {
+                const active = priceTier === tier;
+                return (
+                  <button
+                    key={tier}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => setPriceTier(tier)}
+                    className={`flex cursor-pointer flex-col items-center justify-center gap-1 rounded-card border py-2.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
+                      active
+                        ? "border-accent-600 bg-accent-600 text-white"
+                        : "border-line bg-surface text-ink-muted hover:border-accent-600"
+                    }`}
+                  >
+                    <span className="font-bold">{"$".repeat(tier)}</span>
+                    <span className="text-xs">{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+        </Section>
+
+        <Section step={4} title={<>التواصل <span className={hintClass}>(اختياري)</span></>}>
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className={labelClass}>
+              الهاتف
+              <div className="flex items-center gap-2 rounded-card border border-ink/10 bg-surface px-3 focus-within:border-brand-400">
+                <span aria-hidden className="ms text-ink-muted">
+                  call
+                </span>
+                <input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full bg-transparent py-2 text-ink placeholder:text-ink-muted focus:outline-none"
+                  dir="ltr"
+                  inputMode="tel"
+                  placeholder="+963…"
+                />
+              </div>
+            </label>
+            <label className={labelClass}>
+              واتساب
+              <div className="flex items-center gap-2 rounded-card border border-ink/10 bg-surface px-3 focus-within:border-brand-400">
+                <span aria-hidden className="ms text-ink-muted">
+                  chat
+                </span>
+                <input
+                  value={whatsapp}
+                  onChange={(e) => setWhatsapp(e.target.value)}
+                  className="w-full bg-transparent py-2 text-ink placeholder:text-ink-muted focus:outline-none"
+                  dir="ltr"
+                  inputMode="tel"
+                  placeholder="+963…"
+                />
+              </div>
+            </label>
+            <label className={labelClass}>
+              إنستغرام
+              <div className="flex items-center gap-2 rounded-card border border-ink/10 bg-surface px-3 focus-within:border-brand-400">
+                <span aria-hidden className="ms text-ink-muted">
+                  photo_camera
+                </span>
+                <input
+                  value={instagram}
+                  onChange={(e) => setInstagram(e.target.value)}
+                  className="w-full bg-transparent py-2 text-ink placeholder:text-ink-muted focus:outline-none"
+                  dir="ltr"
+                  placeholder="@username"
+                />
+              </div>
+            </label>
+            <label className={labelClass}>
+              الموقع الإلكتروني
+              <div className="flex items-center gap-2 rounded-card border border-ink/10 bg-surface px-3 focus-within:border-brand-400">
+                <span aria-hidden className="ms text-ink-muted">
+                  language
+                </span>
+                <input
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                  className="w-full bg-transparent py-2 text-ink placeholder:text-ink-muted focus:outline-none"
+                  dir="ltr"
+                  inputMode="url"
+                  placeholder="https://…"
+                />
+              </div>
+            </label>
+          </div>
+        </Section>
+
+        <Section step={5} title={<>نبذة <span className={hintClass}>(اختياري)</span></>}>
+          <textarea
+            value={descriptionAr}
+            onChange={(e) => setDescriptionAr(e.target.value)}
+            rows={4}
+            className={inputClass}
+            placeholder="عرّف بالمطعم وأجوائه وأطباقه المميزة…"
+          />
+        </Section>
+      </div>
+
+      {/* Preview / checklist sidebar (bottom on mobile, sticky-left on desktop). */}
+      <aside className="mt-6 md:mt-0 md:sticky md:top-20">
+        <div className="flex flex-col gap-4 rounded-card border border-line bg-surface p-5">
+          <span className="text-xs font-medium text-ink-muted">معاينة</span>
+
+          <div className="flex flex-col gap-1">
+            <p
+              className={`font-heading text-2xl font-black leading-tight ${
+                hasName ? "text-ink" : "text-ink-muted"
+              }`}
+            >
+              {nameAr.trim() || "اسم المطعم"}
+            </p>
+            <p
+              className={`text-sm ${selectedCity ? "text-ink-muted" : "text-ink-muted/60"}`}
+            >
+              {selectedCity?.nameAr ?? "المدينة"}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {selectedCategoryNames.map((name) => (
+                <span
+                  key={name}
+                  className="inline-flex items-center rounded-pill bg-surface-muted px-2.5 py-0.5 text-xs font-medium text-ink"
+                >
+                  {name}
+                </span>
+              ))}
+              <span className="inline-flex items-center rounded-pill bg-surface-muted px-2.5 py-0.5 text-xs font-bold text-accent-600">
+                {"$".repeat(priceTier)}
+              </span>
+            </div>
+          </div>
+
+          <ul className="flex flex-col gap-2 border-t border-line pt-4">
+            <ChecklistRow ok={hasName} label="الاسم بالعربية" />
+            <ChecklistRow ok={hasCity} label="المدينة" />
+            <ChecklistRow ok={hasCategory} label="تصنيف واحد على الأقل" />
+          </ul>
+
+          <label className="flex cursor-pointer items-start gap-3 border-t border-line pt-4">
+            <input
+              type="checkbox"
+              checked={claimOwnership}
+              onChange={(e) => setClaimOwnership(e.target.checked)}
+              className="mt-1 size-4 cursor-pointer accent-brand-500"
+            />
+            <span className="flex flex-col gap-0.5">
+              <span className="text-sm font-medium text-ink">
+                أنا مالك هذا المكان
+              </span>
+              <span className={hintClass}>
+                سيتم إرسال طلب ملكية للمراجعة حتى تتمكن من إدارة الصفحة.
+              </span>
+            </span>
+          </label>
+
+          <button
+            type="submit"
+            disabled={busy || !canSubmit}
+            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-pill bg-brand-500 px-6 py-3 font-bold text-on-accent transition hover:bg-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <option value="">
-              {cityId ? "اختر الحي…" : "اختر المدينة أولاً"}
-            </option>
-            {neighborhoods?.map((n) => (
-              <option key={n.id} value={n.slug}>
-                {n.nameAr}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+            {busy ? "جارٍ الإرسال…" : "أرسل للمراجعة"}
+            {!busy && (
+              <span aria-hidden className="ms">
+                arrow_back
+              </span>
+            )}
+          </button>
 
-      <fieldset className="flex flex-col gap-2">
-        <legend className="text-sm font-medium text-ink">التصنيفات *</legend>
-        <ChipSelect
-          options={categories}
-          selected={categorySlugs}
-          onToggle={(slug) => setCategorySlugs((prev) => toggle(prev, slug))}
-        />
-      </fieldset>
-
-      <fieldset className="flex flex-col gap-2">
-        <legend className="text-sm font-medium text-ink">
-          المطابخ <span className={hintClass}>(اختياري)</span>
-        </legend>
-        <ChipSelect
-          options={cuisines}
-          selected={cuisineSlugs}
-          onToggle={(slug) => setCuisineSlugs((prev) => toggle(prev, slug))}
-        />
-      </fieldset>
-
-      <fieldset className="flex flex-col gap-2">
-        <legend className="text-sm font-medium text-ink">مستوى السعر</legend>
-        <PriceTierInput value={priceTier} onChange={setPriceTier} />
-      </fieldset>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className={labelClass}>
-          الهاتف <span className={hintClass}>(اختياري)</span>
-          <input
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className={inputClass}
-            dir="ltr"
-            inputMode="tel"
-            placeholder="+963…"
-          />
-        </label>
-        <label className={labelClass}>
-          واتساب <span className={hintClass}>(اختياري)</span>
-          <input
-            value={whatsapp}
-            onChange={(e) => setWhatsapp(e.target.value)}
-            className={inputClass}
-            dir="ltr"
-            inputMode="tel"
-            placeholder="+963…"
-          />
-        </label>
-        <label className={labelClass}>
-          إنستغرام <span className={hintClass}>(اختياري)</span>
-          <input
-            value={instagram}
-            onChange={(e) => setInstagram(e.target.value)}
-            className={inputClass}
-            dir="ltr"
-            placeholder="@username"
-          />
-        </label>
-        <label className={labelClass}>
-          الموقع الإلكتروني <span className={hintClass}>(اختياري)</span>
-          <input
-            value={website}
-            onChange={(e) => setWebsite(e.target.value)}
-            className={inputClass}
-            dir="ltr"
-            inputMode="url"
-            placeholder="https://…"
-          />
-        </label>
-      </div>
-
-      <label className={labelClass}>
-        العنوان <span className={hintClass}>(اختياري)</span>
-        <input
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          className={inputClass}
-          placeholder="الشارع، بجانب…"
-        />
-      </label>
-
-      <label className={labelClass}>
-        نبذة <span className={hintClass}>(اختياري)</span>
-        <textarea
-          value={descriptionAr}
-          onChange={(e) => setDescriptionAr(e.target.value)}
-          rows={4}
-          className={inputClass}
-          placeholder="عرّف بالمطعم وأجوائه وأطباقه المميزة…"
-        />
-      </label>
-
-      <label className="flex items-start gap-3 rounded-card bg-surface-muted px-4 py-3">
-        <input
-          type="checkbox"
-          checked={claimOwnership}
-          onChange={(e) => setClaimOwnership(e.target.checked)}
-          className="mt-1 size-4 accent-brand-500"
-        />
-        <span className="flex flex-col gap-0.5">
-          <span className="text-sm font-medium text-ink">
-            أنا مالك هذا المكان
-          </span>
-          <span className={hintClass}>
-            سيتم إرسال طلب ملكية للمراجعة حتى تتمكن من إدارة الصفحة.
-          </span>
-        </span>
-      </label>
-
-      <div className="flex justify-end">
-        <button type="submit" disabled={busy} className={primaryBtnClass}>
-          {busy ? "جارٍ الإرسال…" : "إرسال للمراجعة"}
-        </button>
-      </div>
+          <p className={`${hintClass} text-center`}>
+            نراجع كل مطعم قبل ما ينشر، عادةً خلال يوم.
+          </p>
+        </div>
+      </aside>
     </form>
   );
 }
