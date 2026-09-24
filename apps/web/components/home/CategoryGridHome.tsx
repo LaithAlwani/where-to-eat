@@ -44,12 +44,12 @@ export function CategoryGridHome() {
             <li key={category.id}>
               <Link
                 href={`/category/${category.slug}`}
-                className="flex min-h-28 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-card border border-line bg-surface p-3 text-center transition hover:border-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                className="flex h-full min-h-28 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-card border border-line bg-surface p-3 text-center transition hover:border-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
               >
                 <span className="ms text-4xl text-accent-ink" aria-hidden>
                   {CATEGORY_ICON[category.slug] ?? "restaurant"}
                 </span>
-                <span className="font-heading text-xl font-black leading-tight text-ink">
+                <span className="font-heading text-lg font-black leading-tight text-balance text-ink">
                   {category.nameAr}
                 </span>
                 <span dir="ltr" className="text-xs text-ink-muted">
