@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 type DrawerProps = {
   open: boolean;
@@ -61,7 +62,11 @@ export function Drawer({ open, onClose, title, children }: DrawerProps) {
 
   if (!mounted) return null;
 
-  return (
+  // Portal to <body>: the sticky header uses `backdrop-blur`, and a
+  // backdrop-filter ancestor makes `position: fixed` descendants anchor to that
+  // ancestor's box instead of the viewport — which would trap this overlay
+  // inside the ~header-height box. Rendering into <body> escapes that.
+  return createPortal(
     <div className="fixed inset-0 z-50">
       {/* Backdrop */}
       <div
@@ -80,7 +85,7 @@ export function Drawer({ open, onClose, title, children }: DrawerProps) {
         aria-label={title}
         tabIndex={-1}
         onTransitionEnd={handleTransitionEnd}
-        className={`absolute inset-e-0 top-0 flex h-full w-[min(20rem,85vw)] flex-col bg-surface shadow-2xl outline-none transition-transform duration-200 ease-out motion-reduce:transition-none ${
+        className={`absolute inset-e-0 inset-y-0 flex w-[min(20rem,85vw)] flex-col bg-surface shadow-2xl outline-none transition-transform duration-200 ease-out motion-reduce:transition-none ${
           visible
             ? "translate-x-0"
             : "ltr:translate-x-full rtl:-translate-x-full"
@@ -99,8 +104,9 @@ export function Drawer({ open, onClose, title, children }: DrawerProps) {
             ✕
           </button>
         </div>
-        <div className="themed-scroll flex-1 overflow-y-auto p-4">{children}</div>
+        <div className="themed-scroll min-h-0 flex-1 overflow-y-auto p-4">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
