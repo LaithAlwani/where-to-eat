@@ -3,10 +3,34 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { api } from "@repo/backend";
-import { t } from "@repo/shared/i18n";
 import { authClient } from "@/lib/auth-client";
 
 type Mode = "signin" | "signup";
+
+type AuthError = { code?: string; message?: string; status?: number };
+
+/** Map a Better Auth error to a clear Arabic message. */
+function authErrorMessage(err: AuthError | undefined): string {
+  const code = err?.code ?? "";
+  const byCode: Record<string, string> = {
+    INVALID_EMAIL_OR_PASSWORD: "البريد الإلكتروني أو كلمة المرور غير صحيحة",
+    INVALID_PASSWORD: "كلمة المرور غير صحيحة",
+    USER_NOT_FOUND: "لا يوجد حساب بهذا البريد",
+    USER_ALREADY_EXISTS: "هذا البريد مسجّل مسبقاً — جرّب تسجيل الدخول",
+    EMAIL_ALREADY_EXISTS: "هذا البريد مسجّل مسبقاً — جرّب تسجيل الدخول",
+    PASSWORD_TOO_SHORT: "كلمة المرور قصيرة (٨ أحرف على الأقل)",
+    PASSWORD_TOO_LONG: "كلمة المرور طويلة جداً",
+    INVALID_EMAIL: "البريد الإلكتروني غير صالح",
+    EMAIL_NOT_VERIFIED: "يجب تأكيد بريدك الإلكتروني أولاً",
+  };
+  if (byCode[code]) return byCode[code];
+  const msg = (err?.message ?? "").toLowerCase();
+  if (err?.status === 403 || msg.includes("origin")) {
+    return "تعذّر تسجيل الدخول لأسباب تقنية (أصل الطلب غير موثوق). حدّث الصفحة وحاول مجدداً.";
+  }
+  if (err?.status === 429) return "محاولات كثيرة، انتظر قليلاً ثم أعد المحاولة";
+  return "تعذّر تسجيل الدخول، حاول مرة أخرى";
+}
 
 /**
  * Minimal email/password auth panel proving the Better Auth wiring. Errors are
@@ -54,10 +78,11 @@ export function AuthPanel() {
           ? await authClient.signUp.email({ name, email, password })
           : await authClient.signIn.email({ email, password });
       if (result.error) {
-        setError(result.error.message ?? t("error.unknown"));
+        setError(authErrorMessage(result.error));
       }
     } catch {
-      setError(t("error.unknown"));
+      // Network / server unreachable (not an auth rejection).
+      setError("تعذّر الاتصال بالخادم، تحقّق من اتصالك وحاول مجدداً");
     } finally {
       setBusy(false);
     }
