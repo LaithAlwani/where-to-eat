@@ -107,7 +107,7 @@ export function NotificationsPanel({ onClose }: { onClose: () => void }) {
               type="button"
               onClick={() => handleClick(item)}
               className={`flex w-full flex-col gap-1 rounded-card p-3 text-start ring-1 ring-ink/5 transition hover:bg-surface-muted ${
-                item.read ? "bg-surface" : "bg-brand-50"
+                item.read ? "bg-surface" : "bg-brand-500/10"
               }`}
             >
               <span className="flex items-center gap-2">

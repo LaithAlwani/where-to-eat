@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { api } from "@repo/backend";
 import { authClient } from "@/lib/auth-client";
+import { inputClass, labelClass } from "@/lib/ui";
 
 type Mode = "signin" | "signup";
 
@@ -92,76 +93,179 @@ export function AuthPanel() {
 
   if (isAuthenticated) {
     return (
-      <div className="flex items-center gap-3">
-        <span>
-          أهلاً {currentUser?.name ?? ""} · صلاحية: {currentUser?.role ?? "—"}
-        </span>
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center gap-3 rounded-card bg-surface-muted p-4">
+          <span
+            aria-hidden
+            className="flex size-11 shrink-0 items-center justify-center rounded-pill bg-brand-500/15 text-accent-ink"
+          >
+            <span className="ms text-[1.5rem]">account_circle</span>
+          </span>
+          <div className="flex flex-col">
+            <span className="font-heading font-bold text-ink">
+              أهلاً {currentUser?.name ?? ""}
+            </span>
+            <span className="text-sm text-ink-muted">
+              صلاحية: {currentUser?.role ?? "—"}
+            </span>
+          </div>
+        </div>
         <button
           type="button"
           onClick={() => authClient.signOut()}
-          className="rounded-pill border border-ink-muted px-4 py-1"
+          className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-pill border border-line px-5 py-2.5 font-medium text-ink transition hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
         >
+          <span className="ms text-[1.25rem]" aria-hidden>
+            logout
+          </span>
           تسجيل الخروج
         </button>
       </div>
     );
   }
 
+  const iconInputClass = `${inputClass} ps-11`;
+
   return (
-    <form onSubmit={onSubmit} className="flex max-w-sm flex-col gap-3">
-      <div className="flex gap-2 text-sm">
+    <form onSubmit={onSubmit} className="flex flex-col gap-5">
+      <div className="flex flex-col gap-1">
+        <h2 className="font-heading text-xl font-bold text-ink">
+          {mode === "signup" ? "أنشئ حسابك" : "مرحباً بعودتك"}
+        </h2>
+        <p className="text-sm text-ink-muted">
+          {mode === "signup"
+            ? "سجّل لتحفظ مطاعمك المفضلة وتضيف أماكن جديدة"
+            : "سجّل دخولك لمتابعة نشاطك"}
+        </p>
+      </div>
+
+      {/* Segmented control */}
+      <div
+        role="tablist"
+        aria-label="نوع الحساب"
+        className="grid grid-cols-2 gap-1 rounded-pill bg-surface-muted p-1"
+      >
         <button
           type="button"
-          onClick={() => setMode("signup")}
-          className={mode === "signup" ? "font-bold text-brand-600" : ""}
+          role="tab"
+          aria-selected={mode === "signin"}
+          onClick={() => setMode("signin")}
+          className={`cursor-pointer rounded-pill px-4 py-2 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
+            mode === "signin"
+              ? "bg-brand-500 text-on-accent"
+              : "text-ink-muted hover:text-ink"
+          }`}
         >
-          حساب جديد
+          دخول
         </button>
         <button
           type="button"
-          onClick={() => setMode("signin")}
-          className={mode === "signin" ? "font-bold text-brand-600" : ""}
+          role="tab"
+          aria-selected={mode === "signup"}
+          onClick={() => setMode("signup")}
+          className={`cursor-pointer rounded-pill px-4 py-2 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
+            mode === "signup"
+              ? "bg-brand-500 text-on-accent"
+              : "text-ink-muted hover:text-ink"
+          }`}
         >
-          تسجيل الدخول
+          حساب جديد
         </button>
       </div>
 
       {mode === "signup" && (
-        <input
-          type="text"
-          placeholder="الاسم"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-          className="rounded-lg border border-ink-muted px-3 py-2"
-        />
+        <label className={labelClass}>
+          الاسم
+          <span className="relative block">
+            <span
+              aria-hidden
+              className="ms pointer-events-none absolute inset-y-0 inset-s-3 flex items-center text-[1.25rem] text-ink-muted"
+            >
+              person
+            </span>
+            <input
+              type="text"
+              placeholder="اسمك الكامل"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className={iconInputClass}
+            />
+          </span>
+        </label>
       )}
-      <input
-        type="email"
-        placeholder="البريد الإلكتروني"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-        className="rounded-lg border border-ink-muted px-3 py-2"
-      />
-      <input
-        type="password"
-        placeholder="كلمة المرور"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-        minLength={8}
-        className="rounded-lg border border-ink-muted px-3 py-2"
-      />
 
-      {error && <p className="text-sm text-brand-600">{error}</p>}
+      <label className={labelClass}>
+        البريد الإلكتروني
+        <span className="relative block">
+          <span
+            aria-hidden
+            className="ms pointer-events-none absolute inset-y-0 inset-s-3 flex items-center text-[1.25rem] text-ink-muted"
+          >
+            mail
+          </span>
+          <input
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className={iconInputClass}
+          />
+        </span>
+      </label>
+
+      <label className={labelClass}>
+        كلمة المرور
+        <span className="relative block">
+          <span
+            aria-hidden
+            className="ms pointer-events-none absolute inset-y-0 inset-s-3 flex items-center text-[1.25rem] text-ink-muted"
+          >
+            lock
+          </span>
+          <input
+            type="password"
+            placeholder="٨ أحرف على الأقل"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={8}
+            className={iconInputClass}
+          />
+        </span>
+      </label>
+
+      {error && (
+        <p
+          role="alert"
+          className="flex items-start gap-2 rounded-card bg-brand-500/10 p-3 text-sm font-medium text-accent-ink"
+        >
+          <span className="ms shrink-0 text-[1.25rem]" aria-hidden>
+            error
+          </span>
+          {error}
+        </p>
+      )}
 
       <button
         type="submit"
         disabled={busy}
-        className="rounded-pill bg-brand-500 px-5 py-2 text-on-accent disabled:opacity-50"
+        className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-pill bg-brand-500 px-5 py-2.5 font-bold text-on-accent transition hover:bg-brand-600 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
       >
-        {mode === "signup" ? "إنشاء حساب" : "دخول"}
+        {busy && (
+          <span
+            aria-hidden
+            className="ms animate-spin text-[1.25rem] motion-reduce:animate-none"
+          >
+            progress_activity
+          </span>
+        )}
+        {busy
+          ? "جارٍ…"
+          : mode === "signup"
+            ? "إنشاء حساب"
+            : "دخول"}
       </button>
     </form>
   );

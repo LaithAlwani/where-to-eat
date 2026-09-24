@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { useConvexAuth } from "convex/react";
 import { Dialog } from "./ui/Dialog";
+import { Drawer } from "./ui/Drawer";
+import { Popover } from "./ui/Popover";
 import { AuthPanel } from "./AuthPanel";
 import { AccountMenu } from "./AccountMenu";
 import { NotificationsBell } from "./NotificationsBell";
@@ -17,17 +19,11 @@ import { ThemeToggle } from "./ThemeToggle";
  */
 export function Header() {
   const { isAuthenticated } = useConvexAuth();
-  const [accountOpen, setAccountOpen] = useState(false); // signed-in menu
   const [authOpen, setAuthOpen] = useState(false); // signed-out login/signup
   const [menuOpen, setMenuOpen] = useState(false); // mobile sheet
 
   const ghostPill =
     "inline-flex items-center gap-1.5 rounded-pill px-3 py-2 text-sm font-medium text-ink transition hover:bg-surface-muted cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500";
-
-  function openAccount() {
-    if (isAuthenticated) setAccountOpen(true);
-    else setAuthOpen(true);
-  }
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-bg/90 backdrop-blur">
@@ -67,12 +63,34 @@ export function Header() {
           )}
           <ThemeToggle />
           {isAuthenticated && <NotificationsBell />}
-          <button type="button" onClick={openAccount} className={ghostPill}>
-            <span className="ms text-[1.25rem]" aria-hidden>
-              account_circle
-            </span>
-            {isAuthenticated ? "حسابي" : "تسجيل الدخول"}
-          </button>
+          {isAuthenticated ? (
+            <Popover
+              label="حسابي"
+              triggerClassName={ghostPill}
+              panelClassName="w-64 p-2"
+              trigger={
+                <>
+                  <span className="ms text-[1.25rem]" aria-hidden>
+                    account_circle
+                  </span>
+                  حسابي
+                </>
+              }
+            >
+              {(close) => <AccountMenu onNavigate={close} />}
+            </Popover>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setAuthOpen(true)}
+              className={ghostPill}
+            >
+              <span className="ms text-[1.25rem]" aria-hidden>
+                account_circle
+              </span>
+              تسجيل الدخول
+            </button>
+          )}
         </nav>
 
         {/* Mobile actions */}
@@ -93,7 +111,7 @@ export function Header() {
       </div>
 
       {/* Mobile menu: everyday links + (account section | sign-in) */}
-      <Dialog open={menuOpen} onClose={() => setMenuOpen(false)} title="القائمة">
+      <Drawer open={menuOpen} onClose={() => setMenuOpen(false)} title="القائمة">
         <nav className="flex flex-col gap-1">
           {[
             { href: "/", label: "الرئيسية", icon: "home" },
@@ -133,12 +151,7 @@ export function Header() {
             </button>
           )}
         </nav>
-      </Dialog>
-
-      {/* Desktop account menu (signed in) */}
-      <Dialog open={accountOpen} onClose={() => setAccountOpen(false)} title="حسابي">
-        <AccountMenu onNavigate={() => setAccountOpen(false)} />
-      </Dialog>
+      </Drawer>
 
       {/* Login / signup (signed out) */}
       <Dialog open={authOpen} onClose={() => setAuthOpen(false)} title="الحساب">
