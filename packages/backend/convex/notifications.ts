@@ -63,18 +63,29 @@ export const markRead = mutation({
   },
 });
 
-/** Mark all the viewer's notifications read (bounded per call). */
-export const markAllRead = mutation({
+/** Dismiss (delete) one notification (owner only). */
+export const dismiss = mutation({
+  args: { notificationId: v.id("notifications") },
+  handler: async (ctx, { notificationId }) => {
+    const viewer = await requireViewer(ctx);
+    const notification = await ctx.db.get(notificationId);
+    if (!notification) return { ok: true };
+    if (notification.userId !== viewer._id) return appError("forbidden");
+    await ctx.db.delete(notificationId);
+    return { ok: true };
+  },
+});
+
+/** Dismiss (delete) all the viewer's notifications (bounded per call). */
+export const dismissAll = mutation({
   args: {},
   handler: async (ctx) => {
     const viewer = await requireViewer(ctx);
-    const unread = await ctx.db
+    const mine = await ctx.db
       .query("notifications")
-      .withIndex("by_user_read", (q) =>
-        q.eq("userId", viewer._id).eq("read", false),
-      )
+      .withIndex("by_user", (q) => q.eq("userId", viewer._id))
       .take(200);
-    await Promise.all(unread.map((n) => ctx.db.patch(n._id, { read: true })));
-    return { ok: true, marked: unread.length };
+    await Promise.all(mine.map((n) => ctx.db.delete(n._id)));
+    return { ok: true, dismissed: mine.length };
   },
 });

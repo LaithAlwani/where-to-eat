@@ -30,8 +30,8 @@ type NotificationItem = {
 export function NotificationsPanel({ onClose }: { onClose: () => void }) {
   const { toast } = useToast();
   const router = useRouter();
-  const markRead = useMutation(api.notifications.markRead);
-  const markAllRead = useMutation(api.notifications.markAllRead);
+  const dismiss = useMutation(api.notifications.dismiss);
+  const dismissAll = useMutation(api.notifications.dismissAll);
 
   const { results, status, loadMore } = usePaginatedQuery(
     api.notifications.listMine,
@@ -39,23 +39,24 @@ export function NotificationsPanel({ onClose }: { onClose: () => void }) {
     { initialNumItems: 15 },
   );
 
+  // Clicking a notification navigates (if it has a link) and dismisses it, so
+  // it leaves the menu. Navigate first, then dismiss so a failed delete never
+  // blocks the user reaching the linked page.
   async function handleClick(item: NotificationItem) {
+    if (item.link) {
+      router.push(item.link);
+      onClose();
+    }
     try {
-      if (!item.read) {
-        await markRead({ notificationId: item.id });
-      }
-      if (item.link) {
-        router.push(item.link);
-        onClose();
-      }
+      await dismiss({ notificationId: item.id });
     } catch (err) {
       toast({ title: getErrorMessage(err), variant: "error" });
     }
   }
 
-  async function handleMarkAll() {
+  async function handleDismissAll() {
     try {
-      await markAllRead({});
+      await dismissAll({});
     } catch (err) {
       toast({ title: getErrorMessage(err), variant: "error" });
     }
@@ -85,18 +86,18 @@ export function NotificationsPanel({ onClose }: { onClose: () => void }) {
     );
   }
 
-  const hasUnread = results.some((n) => !n.read);
-
   return (
     <div className="flex flex-col gap-3">
       <div className="flex justify-end">
         <button
           type="button"
-          onClick={handleMarkAll}
-          disabled={!hasUnread}
-          className="rounded-pill px-3 py-1.5 text-sm font-medium text-ink-muted transition hover:bg-surface-muted hover:text-ink disabled:opacity-50"
+          onClick={handleDismissAll}
+          className="inline-flex items-center gap-1 rounded-pill px-3 py-1.5 text-sm font-medium text-ink-muted transition hover:bg-surface-muted hover:text-ink"
         >
-          تعليم الكل كمقروء
+          <span aria-hidden className="ms text-[1.125rem]">
+            done_all
+          </span>
+          مسح الكل
         </button>
       </div>
 
@@ -106,17 +107,13 @@ export function NotificationsPanel({ onClose }: { onClose: () => void }) {
             <button
               type="button"
               onClick={() => handleClick(item)}
-              className={`flex w-full flex-col gap-1 rounded-card p-3 text-start ring-1 ring-ink/5 transition hover:bg-surface-muted ${
-                item.read ? "bg-surface" : "bg-brand-500/10"
-              }`}
+              className="flex w-full flex-col gap-1 rounded-card bg-brand-500/10 p-3 text-start ring-1 ring-ink/5 transition hover:bg-surface-muted"
             >
               <span className="flex items-center gap-2">
-                {!item.read && (
-                  <span
-                    aria-hidden
-                    className="size-2 shrink-0 rounded-full bg-brand-500"
-                  />
-                )}
+                <span
+                  aria-hidden
+                  className="size-2 shrink-0 rounded-full bg-brand-500"
+                />
                 <span className="font-bold text-ink">{item.title}</span>
               </span>
               {item.body && (

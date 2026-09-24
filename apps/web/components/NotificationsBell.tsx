@@ -18,7 +18,7 @@ export function NotificationsBell() {
 
   return (
     <Popover
-      label={count > 0 ? `الإشعارات (${badge} غير مقروءة)` : "الإشعارات"}
+      label={count > 0 ? `الإشعارات (${badge})` : "الإشعارات"}
       triggerClassName="relative inline-flex size-11 cursor-pointer items-center justify-center rounded-pill border border-line text-ink transition hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
       panelClassName="w-80 sm:w-96"
       trigger={
