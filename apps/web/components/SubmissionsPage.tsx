@@ -5,6 +5,7 @@ import { useConvexAuth, usePaginatedQuery, useQuery } from "convex/react";
 import { api } from "@repo/backend";
 import { formatDate } from "@/lib/format";
 import { primaryBtnClass } from "@/lib/ui";
+import { CoverImage } from "./CoverImage";
 import { StatusBadge } from "./StatusBadge";
 
 /**
@@ -77,14 +78,21 @@ function SubmittedRestaurants() {
               key={item.id}
               className="flex flex-col gap-2 rounded-card bg-surface p-4 ring-1 ring-ink/5"
             >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex flex-col gap-1">
-                  <span className="text-lg font-bold text-ink">
-                    {item.nameAr}
-                  </span>
-                  <span className="text-sm text-ink-muted">
-                    {item.cityNameAr}
-                  </span>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <CoverImage
+                    url={item.coverUrl}
+                    nameAr={item.nameAr}
+                    className="size-14 shrink-0"
+                  />
+                  <div className="flex min-w-0 flex-col gap-1">
+                    <span className="truncate text-lg font-bold text-ink">
+                      {item.nameAr}
+                    </span>
+                    <span className="text-sm text-ink-muted">
+                      {item.cityNameAr}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex flex-col items-end gap-1">
                   <StatusBadge status={item.status} />
@@ -101,12 +109,12 @@ function SubmittedRestaurants() {
               )}
 
               <div className="flex flex-wrap gap-2">
-                {item.status === "rejected" && (
+                {(item.status === "pending" || item.status === "rejected") && (
                   <Link
                     href={`/submissions/${item.id}`}
                     className="rounded-pill bg-brand-500 px-4 py-1.5 text-sm font-medium text-on-accent transition hover:bg-brand-600"
                   >
-                    تعديل وإعادة الإرسال
+                    {item.status === "rejected" ? "تعديل وإعادة الإرسال" : "تعديل"}
                   </Link>
                 )}
                 {item.status === "published" && (

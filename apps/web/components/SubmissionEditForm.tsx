@@ -10,6 +10,7 @@ import { inputClass, labelClass, hintClass, primaryBtnClass } from "@/lib/ui";
 import { useToast } from "./ui/ToastProvider";
 import { ChipSelect } from "./ChipSelect";
 import { PriceTierInput } from "./PriceTierInput";
+import { PhotoPicker } from "./PhotoPicker";
 
 type PriceTier = 1 | 2 | 3 | 4;
 
@@ -17,6 +18,10 @@ type Editable = {
   id: Id<"restaurants">;
   status: "pending" | "published" | "rejected" | "closed";
   moderationNote: string | null;
+  coverKey: string | null;
+  photoKeys: string[];
+  coverUrl: string | null;
+  photoUrls: string[];
   nameAr: string;
   nameEn: string | null;
   descriptionAr: string | null;
@@ -86,6 +91,8 @@ function EditForm({
   const { toast } = useToast();
   const router = useRouter();
   const resubmit = useMutation(api.submissions.resubmit);
+  const generateUploadUrl = useMutation(api.submissions.generateUploadUrl);
+  const attachPhotos = useMutation(api.submissions.attachPhotos);
 
   const cities = useQuery(api.taxonomy.listCities);
   const categories = useQuery(api.taxonomy.listCategories);
@@ -112,6 +119,16 @@ function EditForm({
     editable.descriptionAr ?? "",
   );
   const [address, setAddress] = useState(editable.address ?? "");
+  const [keptPhotos, setKeptPhotos] = useState(() => [
+    ...(editable.coverKey && editable.coverUrl
+      ? [{ key: editable.coverKey, url: editable.coverUrl }]
+      : []),
+    ...editable.photoKeys.map((k, i) => ({
+      key: k,
+      url: editable.photoUrls[i] ?? "",
+    })),
+  ]);
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
 
   const selectedCity = cities?.find((c) => c.slug === citySlug) ?? null;
@@ -124,6 +141,27 @@ function EditForm({
     return list.includes(slug)
       ? list.filter((s) => s !== slug)
       : [...list, slug];
+  }
+
+  /** Upload newly-picked photos into restaurants/<id>/…; returns their keys. */
+  async function uploadPhotos(): Promise<string[]> {
+    const keys: string[] = [];
+    for (const file of photoFiles) {
+      try {
+        const key = `restaurants/${restaurantId}/${crypto.randomUUID()}`;
+        const { url } = await generateUploadUrl({ restaurantId, key });
+        const res = await fetch(url, {
+          method: "PUT",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
+        if (!res.ok) throw new Error("upload failed");
+        keys.push(key);
+      } catch {
+        toast({ title: "تعذّر رفع إحدى الصور", variant: "error" });
+      }
+    }
+    return keys;
   }
 
   async function handleSubmit(event: React.FormEvent) {
@@ -159,6 +197,16 @@ function EditForm({
         descriptionAr: descriptionAr.trim() || undefined,
         address: address.trim() || undefined,
       });
+
+      // Sync photos: upload new ones, keep the rest; first image = cover.
+      const uploaded = await uploadPhotos();
+      const finalKeys = keptPhotos.map((p) => p.key).concat(uploaded);
+      await attachPhotos({
+        restaurantId,
+        coverKey: finalKeys[0],
+        photoKeys: finalKeys.slice(1),
+      });
+
       toast({ title: "تم إرسال التعديلات للمراجعة", variant: "success" });
       router.push("/submissions");
     } catch (err) {
@@ -328,6 +376,25 @@ function EditForm({
           placeholder="عرّف بالمطعم وأجوائه وأطباقه المميزة…"
         />
       </label>
+
+      <fieldset className="flex flex-col gap-2">
+        <legend className="text-sm font-medium text-ink">
+          الصور <span className={hintClass}>(اختياري)</span>
+        </legend>
+        <PhotoPicker
+          existing={keptPhotos}
+          files={photoFiles}
+          max={6}
+          hint="أول صورة تكون الغلاف. الصور الجديدة تُرفع عند الحفظ."
+          onRemoveExisting={(key) =>
+            setKeptPhotos((prev) => prev.filter((p) => p.key !== key))
+          }
+          onAddFiles={(added) => setPhotoFiles((prev) => [...prev, ...added])}
+          onRemoveFile={(index) =>
+            setPhotoFiles((prev) => prev.filter((_, i) => i !== index))
+          }
+        />
+      </fieldset>
 
       <div className="flex justify-end">
         <button type="submit" disabled={busy} className={primaryBtnClass}>

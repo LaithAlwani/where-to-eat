@@ -10,7 +10,7 @@ import {
   computeSearchText,
   syncJoinRows,
 } from "./lib/restaurantWrite";
-import { r2 } from "./r2";
+import { r2, resolveImageUrl, resolveImageUrls } from "./r2";
 import type { Doc, Id } from "./_generated/dataModel";
 
 const priceTier = v.union(
@@ -130,9 +130,8 @@ export const listMine = query({
       .order("desc")
       .paginate(paginationOpts);
 
-    return {
-      ...results,
-      page: results.page.map((r) => ({
+    const page = await Promise.all(
+      results.page.map(async (r) => ({
         id: r._id,
         slug: r.slug,
         nameAr: r.nameAr,
@@ -140,8 +139,10 @@ export const listMine = query({
         status: r.status,
         moderationNote: r.moderationNote ?? null,
         createdAt: r.createdAt,
+        coverUrl: await resolveImageUrl(r.coverKey),
       })),
-    };
+    );
+    return { ...results, page };
   },
 });
 
@@ -154,17 +155,24 @@ export const getMineForEdit = query({
     const r = await ctx.db.get(restaurantId);
     if (!r || r.submittedBy !== viewer._id) return null;
 
-    const [city, neighborhood, categories, cuisines] = await Promise.all([
-      ctx.db.get(r.cityId),
-      r.neighborhoodId ? ctx.db.get(r.neighborhoodId) : Promise.resolve(null),
-      Promise.all(r.categoryIds.map((id) => ctx.db.get(id))),
-      Promise.all(r.cuisineIds.map((id) => ctx.db.get(id))),
-    ]);
+    const [city, neighborhood, categories, cuisines, coverUrl, photoUrls] =
+      await Promise.all([
+        ctx.db.get(r.cityId),
+        r.neighborhoodId ? ctx.db.get(r.neighborhoodId) : Promise.resolve(null),
+        Promise.all(r.categoryIds.map((id) => ctx.db.get(id))),
+        Promise.all(r.cuisineIds.map((id) => ctx.db.get(id))),
+        resolveImageUrl(r.coverKey),
+        resolveImageUrls(r.photoKeys),
+      ]);
 
     return {
       id: r._id,
       status: r.status,
       moderationNote: r.moderationNote ?? null,
+      coverKey: r.coverKey ?? null,
+      photoKeys: r.photoKeys,
+      coverUrl,
+      photoUrls,
       nameAr: r.nameAr,
       nameEn: r.nameEn ?? null,
       descriptionAr: r.descriptionAr ?? null,
